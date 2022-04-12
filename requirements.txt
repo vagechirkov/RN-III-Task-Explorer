@@ -1,5 +1,5 @@
 pyyaml
-gunicorn
+git+https://github.com/benoitc/gunicorn/#egg=gunicorn==20.1.0
 eventlet
 flask
 flask-cors

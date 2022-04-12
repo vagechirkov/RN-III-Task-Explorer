@@ -5,7 +5,8 @@ RUN apt-get -y update
 RUN apt-get -y update && apt-get install -qyy \
    -o APT::Install-Recommends=false -o APT::Install-Suggests=false \
    procps \
-   python3 python3-dev python3-venv netbase
+   python3 python3-dev python3-venv netbase \
+   git
 
 ENV VIRTUAL_ENV=/venv
 RUN python3 -m venv $VIRTUAL_ENV
