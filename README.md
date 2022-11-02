@@ -1,45 +1,47 @@
-# Python App Template
+# Steamlit Template
 
-Demonstrates a JSON API with logging to ElasticSearch.
+Demonstrates the deployment of a simple streamlit app on our cluster.
 
-Python version >= 3.7 is required.
+## Adapt template
 
+1. Change app name in `app.yml`
+2. Replace `streamlit-template` in Dockerfile and docker-compose.yml with app
+   name
 
-## Setup
+## Run locally without docker
 
-```
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## Run Locally
+Requires python3.9
 
 ```
-env FLASK_APP=server.py FLASK_ENV=development flask run
+./run_local.sh
 ```
 
+Streamlit app is available at: http://0.0.0.0:5040/
 
-## Example
+## Run locally with docker
 
-Add one to `x`.
-
-```
-$ curl --header 'Content-Type: application/json' \
-       --data-binary '{"x": 5}' \
-       http://localhost:5000/
-{
-  "result": 6
-}
-```
-
-## Deployed
+Requires docker.
 
 ```
-$ curl --header 'Content-Type: application/json' \
-       --data-binary '{"x": 5}' \
-       https://python-app-template.eks-test-default.mpg-chm.com/
-{
-  "result": 6
-}
+docker compose up devapp --build
 ```
+
+Streamlit app is available at: http://0.0.0.0:5050/
+
+The python code in this case is linked into the docker image as a volume.
+This allows to run the streamlit app within docker, while still be able to edit
+the code live.
+
+## Run the production docker image
+
+Requires docker.
+
+```
+docker compose up app --build
+```
+
+Streamlit app is available at: http://0.0.0.0:5055/
+
+In this case the code of the streamlit app is part of the docker image and
+cannot be modified after building. Therefore the image has to be rebuild once
+for a change to be effective.
