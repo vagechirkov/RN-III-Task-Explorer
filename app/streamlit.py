@@ -1,7 +1,9 @@
-from collections import namedtuple
-import altair as alt
 import math
+from collections import namedtuple
+
+import altair as alt
 import pandas as pd
+
 import streamlit as st
 
 """
