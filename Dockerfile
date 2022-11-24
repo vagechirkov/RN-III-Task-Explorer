@@ -1,4 +1,4 @@
-FROM python:3.9 as streamlit-template-base
+FROM python:3.9-slim as streamlit-template-base
 RUN pip --no-cache-dir install -U pip
 
 WORKDIR /app
