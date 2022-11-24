@@ -1,20 +1,22 @@
 import streamlit as st
+
 # from generate.generation import Network_Generator
 # from solve.rule_based import Rule_Agent
 
 st.set_page_config(page_title="RN III Task Explorer")
 
-st.write("""
-         # RN III Task Explorer 
-
-         This is an interactive application to explore stimuli and task design
-         for the Reward Networks III project. 
-         
-         ### Overview of sections
-         * In the **Generate** section a user can specify stimuli parameters and generate a set of networks. The networks are saved in a JSON file
-         * In the **Visualize section** the user can visualize the network and try to solve it, keeping track of moves and comparing the solution to other strategies' solutions.
-         * In the **Compare** section we visualize the distribution of scores obtained over solving a collection of networks using different strategies 
-         """)
+with st.sidebar:
+    st.write("""
+             # RN III Task Explorer 
+    
+             This is an interactive application to explore stimuli and task design
+             for the Reward Networks III project. 
+             
+             ### Overview of sections
+             * In the **Generate** section a user can specify stimuli parameters and generate a set of networks. The networks are saved in a JSON file
+             * In the **Visualize section** the user can visualize the network and try to solve it, keeping track of moves and comparing the solution to other strategies' solutions.
+             * In the **Compare** section we visualize the distribution of scores obtained over solving a collection of networks using different strategies 
+             """)
 
 # -------------------
 # Generate
