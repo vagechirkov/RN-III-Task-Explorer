@@ -1,22 +1,20 @@
-version: "3.3"
+version: "3.7"
 services:
   dev_rn_task_explorer:
-    image: streamlit-template-devapp
     build:
-      dockerfile: Dockerfile
       context: .
+      dockerfile: Dockerfile
       target: streamlit-template-devapp
     environment:
       PORT: 5000
     volumes:
       - ./app:/app/app
     ports:
-      - "5050:5000"
+      - "5000:5000"
   rn_task_explorer:
-    image: app
     build:
-      dockerfile: Dockerfile
       context: .
+      dockerfile: Dockerfile
     environment:
       PORT: 5000
     ports:
