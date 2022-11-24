@@ -28,7 +28,7 @@ with st.expander("Generate"):
         params['n_networks'] = st.number_input(
             label='How many networks do you want to generate?',
             min_value=1,
-            max_value=100000,
+            max_value=100_000,
             value=1,
             step=10)
         # how many rewards do you want?
