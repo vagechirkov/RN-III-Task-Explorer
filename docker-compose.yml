@@ -1,6 +1,6 @@
 version: "3.7"
 services:
-  dev_rn_task_explorer:
+  dev_streamlit:
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,7 +11,7 @@ services:
       - ./app:/app/app
     ports:
       - "5000:5000"
-  rn_task_explorer:
+  streamlit:
     build:
       context: .
       dockerfile: Dockerfile
