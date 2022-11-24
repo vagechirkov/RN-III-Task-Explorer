@@ -28,15 +28,15 @@ class Rule_Agent:
         """
 
         # assert tests
-        assert strategy in ['highest_payoff','take_first_loss','random'], \
-            f'Strategy name must be one of {["highest_payoff","take_first_loss","random"]}, got {strategy}'
+        assert strategy in ['myopic','take_first_loss','random'], \
+            f'Strategy name must be one of {["myopic","take_first_loss","random"]}, got {strategy}'
         
         self.networks = networks
         self.strategy =  strategy        
         self.networks_filename = networks_filename
 
         # colors for plot
-        self.colors = {'highest_payoff':'skyblue','take_first_loss':'orangered','random':'springgreen'}
+        self.colors = {'myopic':'skyblue','take_first_loss':'orangered','random':'springgreen'}
         
 
     def select_action(self,possible_actions,possible_actions_rewards):
