@@ -1,6 +1,6 @@
 version: "3.3"
 services:
-  devapp:
+  dev_rn_task_explorer:
     image: streamlit-template-devapp
     build:
       dockerfile: Dockerfile
@@ -12,7 +12,7 @@ services:
       - ./app:/app/app
     ports:
       - "5050:5000"
-  app:
+  rn_task_explorer:
     image: app
     build:
       dockerfile: Dockerfile
