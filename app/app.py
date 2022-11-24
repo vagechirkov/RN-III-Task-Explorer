@@ -19,77 +19,80 @@ st.write("""
 # -------------------
 # Generate
 # -------------------
-with st.expander("Generate"):
-    # submit parameters for generation
-    params = {}
-    with st.form("generate_form", clear_on_submit=False):
-        st.write("Select the generation parameters")
-        # how many networks to generate?
-        params['n_networks'] = st.number_input(
-            label='How many networks do you want to generate?',
-            min_value=1,
-            max_value=100_000,
-            value=1,
-            step=10)
-        # how many rewards do you want?
-        params['n_rewards'] = st.number_input(
-            label='How many rewards in the network?',
-            min_value=2,
-            max_value=5,
-            value=5,
-            step=1)
-        # what are the reward values?
-        rewards_str = st.text_input(
-            label="Insert the reward values separated by a space",
-            value="-20 0 20")
-        params['rewards'] = [int(i) for i in rewards_str.split(" ")]
+with st.sidebar:
+    with st.expander("Generate"):
+        # submit parameters for generation
+        params = {}
+        with st.form("generate_form", clear_on_submit=False):
+            st.write("Select the generation parameters")
+            # how many networks to generate?
+            params['n_networks'] = st.number_input(
+                label='How many networks do you want to generate?',
+                min_value=1,
+                max_value=100_000,
+                value=1,
+                step=10)
+            # how many rewards do you want?
+            params['n_rewards'] = st.number_input(
+                label='How many rewards in the network?',
+                min_value=2,
+                max_value=5,
+                value=5,
+                step=1)
+            # what are the reward values?
+            rewards_str = st.text_input(
+                label="Insert the reward values separated by a space",
+                value="-20 0 20")
+            params['rewards'] = [int(i) for i in rewards_str.split(" ")]
 
-        # how many nodes in each level?
-        # TODO
+            # how many nodes in each level?
+            # TODO
 
-        # Every form must have a submit button.
-        submitted = st.form_submit_button("Generate")
-        if submitted:
-            st.info('Parameters submitted!')
+            # Every form must have a submit button.
+            submitted = st.form_submit_button("Generate")
+            if submitted:
+                st.info('Parameters submitted!')
 
-            # Network_Generator class
-            # G = Network_Generator(params)
-            save_path = "TODO"
-            # networks = G.generate(save_path)
-            st.write("See network in JSON format:")
-            # st.json(networks[0])
+                # Network_Generator class
+                # G = Network_Generator(params)
+                save_path = "TODO"
+                # networks = G.generate(save_path)
+                st.write("See network in JSON format:")
+                # st.json(networks[0])
 
-            # Solve networks with strategies (TODO)
-            # Myopic_agent = Rule_Agent(networks,"myopic")
-            # Myopic_agent.solve()
-            # Loss_agent = Rule_Agent("take_first_loss")
-            # Loss_agent.solve()
+                # Solve networks with strategies (TODO)
+                # Myopic_agent = Rule_Agent(networks,"myopic")
+                # Myopic_agent.solve()
+                # Loss_agent = Rule_Agent("take_first_loss")
+                # Loss_agent.solve()
 
 # -------------------
 # Visualize
 # -------------------
-with st.expander("Visualize"):
-    col1, col2 = st.columns(2)
+with st.sidebar:
+    with st.expander("Visualize"):
+        col1, col2 = st.columns(2)
 
-    with col1:
-        # TODO get list of network ids
-        network_id = st.selectbox("Which network to visualize?",
-                                  ("Email", "Home phone",
-                                   "Mobile phone"))
+        with col1:
+            # TODO get list of network ids
+            network_id = st.selectbox("Which network to visualize?",
+                                      ("Email", "Home phone",
+                                       "Mobile phone"))
 
-    with col2:
-        strategies = st.multiselect(
-            'Which strategy solution do you want to see?',
-            ['Myopic', 'Loss'],
-            ['Myopic'])
+        with col2:
+            strategies = st.multiselect(
+                'Which strategy solution do you want to see?',
+                ['Myopic', 'Loss'],
+                ['Myopic'])
 
-    st.write("Insert custom visualization component here!")
+        st.write("Insert custom visualization component here!")
 
 # -------------------
 # Compare
 # -------------------
-with st.expander("Compare"):
-    st.write("TODO")
+with st.sidebar:
+    with st.expander("Compare"):
+        st.write("TODO")
 
 # Display scores distribution
 # scores_melt = scores.melt(var_name='Experiment', value_name='Measurement')
