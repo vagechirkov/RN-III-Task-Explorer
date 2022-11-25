@@ -1,11 +1,11 @@
 import streamlit.components.v1 as components
 
-BASE_URL = "https://631063bad8ec25de99f6946b-ybybwxkueg.chromatic.com/" \
+BASE_URL = "https://631063bad8ec25de99f6946b-bnxaounhwz.chromatic.com/" \
            "iframe.html?"
-STORY_ARGS = "id=utils-taskexplorer--default&viewMode=story"
+STORY_COMPONENT = "id=utils-taskexplorer2--default&viewMode=story"
 
 
-def network_component(timer: int = 25):
+def network_component(timer: int = 25, network_args: str = None):
     """Embeds a network component from Chromatic.
 
     Parameters
@@ -13,5 +13,6 @@ def network_component(timer: int = 25):
     timer : int
         The time in ms for the component to wait before rendering.
     """
-    url = f"{BASE_URL}args=timer:{timer}&{STORY_ARGS}"
+    # args=timer:{timer}
+    url = f"{BASE_URL}custom_args={network_args}&{STORY_COMPONENT}"
     components.iframe(url, height=700, width=800)

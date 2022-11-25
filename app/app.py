@@ -1,3 +1,5 @@
+import json
+
 import streamlit as st
 from network_component.network_component import network_component
 
@@ -10,8 +12,7 @@ st.write("""
             This is an interactive application to explore stimuli and task 
             design for the Reward Networks III project. 
          """)
-
-network_component(100)
+networks = None
 
 # ------------------- Sidebar -------------------
 with st.sidebar:
@@ -49,7 +50,7 @@ with st.sidebar:
             # what are the reward values?
             rewards_str = st.text_input(
                 label="Insert the reward values separated by a space",
-                value="-20 0 20")
+                value="-100 -20 0 20 140")
             gen_params['rewards'] = [int(i) for i in rewards_str.split(" ")]
             gen_params['n_steps'] = st.number_input(
                 label='How many steps to solve the network?',
@@ -138,19 +139,31 @@ with st.sidebar:
         st.write("Insert custom visualization component here!")
 
 
-    # -------------------
-    # Compare
-    # -------------------
+if networks is not None:
+    # add starting node
+    net_to_plot = networks[0]
+    net_to_plot['nodes'][net_to_plot['starting_node']]['starting_node'] = True
+    # convert dict to string
+    # set separators=(',', ':') to remove spaces
+    networks_str = json.dumps(net_to_plot, separators=(',', ':'))
+    network_component(timer=100, network_args=networks_str)
+else:
+    network_component(100)
 
-    with st.expander("Compare"):
-        st.write("TODO")
 
-    # Display scores distribution
-    # scores_melt = scores.melt(var_name='Experiment', value_name='Measurement')
-    # fig = sns.displot(scores_melt,
-    #                   x='Measurement',
-    #                   binwidth=.2,
-    #                   hue='Experiment',
-    #                   aspect=2,
-    #                   element='step')
-    # st.pyplot(fig)
+# -------------------
+# Compare
+# -------------------
+
+with st.expander("Compare"):
+    st.write("TODO")
+
+# Display scores distribution
+# scores_melt = scores.melt(var_name='Experiment', value_name='Measurement')
+# fig = sns.displot(scores_melt,
+#                   x='Measurement',
+#                   binwidth=.2,
+#                   hue='Experiment',
+#                   aspect=2,
+#                   element='step')
+# st.pyplot(fig)
