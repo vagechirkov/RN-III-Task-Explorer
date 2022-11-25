@@ -9,19 +9,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-from utils import save_json, make_dir
+from .utils import save_json, make_dir
 import pydantic
 import hashlib
 import json
 from collections import Counter
-from utils import parse_network, calculate_q_value, calculate_trace
+from .utils import parse_network, calculate_q_value, calculate_trace
 import torch as th
 import torch_scatter
 from typing import Optional,List,Dict,Any
+from models.network import Network
 from pydantic import BaseModel,validator,parse_obj_as,ValidationError,root_validator
 import yaml
 import sys
 import shutil
+import streamlit as st
+import itertools
 
 
 seed = 42
@@ -45,6 +48,7 @@ class Network_Generator:
         self.rewards = params['rewards']
         self.n_networks = params['n_networks']
         self.n_steps = params['n_steps']
+        self.n_levels = params['n_levels']
         self.node_stages = {0: 4,
                             1: 1,
                             2: 1,
@@ -55,9 +59,13 @@ class Network_Generator:
         self.arc_rad = 0.1
 
         # colors
-        colors = ["red", "coral", "lightgrey", "lightgreen", "green"]
-        stage_colors=['paleturquoise','lightskyblue','royalblue','blue']
+        self.colors = ["red", "coral", "lightgrey", "lightgreen", "green"]
+        self.stage_colors=['paleturquoise','lightskyblue','royalblue','blue']
         min_al = 3
+        c = itertools.product(list(self.node_stages.keys()), repeat=2)
+        
+
+        # TODO change form_to_str depending on n_rewards and n_levels
         from_to_str = {
             "(0,0)": [1, 2, 3],
             "(0,1)": [0],
@@ -73,6 +81,22 @@ class Network_Generator:
             "(3,2)": [3, 4],
             "(3,3)": [3, 4],
         }
+        # idx = np.array_split(np.arange(0,self.n_rewards,1),self.n_levels)
+        # from_to_str = {
+        #     "(0,0)": idx[random.randint(0,self.n_rewards)],
+        #     "(0,1)": idx[random.randint(0,self.n_rewards)],
+        #     "(1,0)": idx[random.randint(0,self.n_rewards)],
+        #     "(1,1)": idx[random.randint(0,self.n_rewards)],
+        #     "(1,2)": idx[random.randint(0,self.n_rewards)],
+        #     "(2,0)": idx[random.randint(0,self.n_rewards)],
+        #     "(2,1)": idx[random.randint(0,self.n_rewards)],
+        #     "(2,2)": idx[random.randint(0,self.n_rewards)],
+        #     "(2,3)": idx[random.randint(0,self.n_rewards)],
+        #     "(3,0)": idx[random.randint(0,self.n_rewards)],
+        #     "(3,1)": idx[random.randint(0,self.n_rewards)],
+        #     "(3,2)": idx[random.randint(0,self.n_rewards)],
+        #     "(3,3)": idx[random.randint(0,self.n_rewards)],
+        # }
         # yaml does not support objects with tuples as keys. This is a hacky workaround.
         self.from_to = {(int(k[1]),int(k[3])):v for k,v in from_to_str.items()}
 
@@ -94,7 +118,7 @@ class Network_Generator:
         a_s = G.nodes[a]['stage']
         b_s = G.nodes[b]['stage']
         reward_idx = random.choice(self.from_to[(a_s,b_s)])
-        G.add_edge(a, b, reward=self.rewards[reward_idx], reward_idx=reward_idx, color=colors[reward_idx])
+        G.add_edge(a, b, reward=self.rewards[reward_idx], reward_idx=reward_idx, color=self.colors[reward_idx])
 
     def new_node(self,G, stage):
         idx = len(G)
@@ -136,10 +160,12 @@ class Network_Generator:
         #     3: 1
         # }
 
+        # assigns a new node to a random stage, a total of 3 times
         for i in range(3):
             stage = random.randint(0,3)
             self.node_stages[stage] += 1
-
+        
+        # assigns node to stage
         for stage, n in self.node_stages.items():
             for i in range(n):
                 self.new_node(G, stage)
@@ -233,7 +259,8 @@ class Network_Generator:
 
     ##### generation and storing networks in json file ######
     #########################################################
-    def generate(self,save_path):
+    #@st.cache(allow_reuse=False)
+    def generate(self,save_path=None):
         """
         Using the functions defined above this method generates networks with
         visualization info included. 
@@ -245,11 +272,11 @@ class Network_Generator:
         """
 
         # sample and store training networks
-        networks = []
+        self.networks = []
         for i in range(self.n_networks):
         
             G = self.sample_network()
-            network = nx.json_graph.node_link_data(G)
+            N = nx.json_graph.node_link_data(G)
 
             # NEW: shuffle randomly the order of the nodes in circular layout
             pos = nx.circular_layout(G)
@@ -266,35 +293,42 @@ class Network_Generator:
             # NEW: add vertices for visualization purposes
             for ii, e in enumerate(G.edges()):
                 if (reversed(e) in G.edges()):
-                    network['links'][ii]['arc_type'] = 'curved'
+                    N['links'][ii]['arc_type'] = 'curved'
                     arc = nx.draw_networkx_edges( 
                         G, random_pos, edgelist=[e], node_size=self.node_size,
                         connectionstyle=f'arc3, rad = {self.arc_rad}')
                 else:
-                    network['links'][ii]['arc_type'] = 'straight'
+                    N['links'][ii]['arc_type'] = 'straight'
                     arc = nx.draw_networkx_edges(
                         G, random_pos, edgelist=[e], node_size=self.node_size)
                 
                 vert = arc[0].get_path().vertices.T[:, :3] * 100
 
-                network['links'][ii]['source_x'] = vert[0, 0] 
-                network['links'][ii]['source_y'] = -1* vert[1, 0]
-                network['links'][ii]['arc_x'] = vert[0, 1]
-                network['links'][ii]['arc_y'] = -1*vert[1, 1]
-                network['links'][ii]['target_x'] = vert[0, 2]
-                network['links'][ii]['target_y'] = -1* vert[1, 2]
+                N['links'][ii]['source_x'] = vert[0, 0] 
+                N['links'][ii]['source_y'] = -1* vert[1, 0]
+                N['links'][ii]['arc_x'] = vert[0, 1]
+                N['links'][ii]['arc_y'] = -1*vert[1, 1]
+                N['links'][ii]['target_x'] = vert[0, 2]
+                N['links'][ii]['target_y'] = -1* vert[1, 2]
 
-            network_id = hashlib.md5(json.dumps(network, sort_keys=True).encode('utf-8')).hexdigest()
+            network_id = hashlib.md5(json.dumps(N, sort_keys=True).encode('utf-8')).hexdigest()
 
-            c = Counter([e['source'] for e in network['links']])
+            c = Counter([e['source'] for e in N['links']])
             
             if all(value == 2 for value in c.values()) and len(list(c.keys()))==10:
                 create_network = self.create_network_object(pos_map=pos_map, 
                                                             n_steps=self.n_steps, 
                                                             network_id=network_id, 
-                                                            **network)
-                networks.append(create_network)
+                                                            **N)
+                self.networks.append(create_network)
             else:
                 print(f'counter {c}, nodes are {list(c.keys())} (n={len(list(c.keys()))})')
 
-        save_json(networks, save_path)
+        #st.json(networks[0])
+        #save_json(networks, save_path)
+        network_objects = [Network(**n) for n in self.networks]
+        #st.json(network_objects[0].json())
+        return self.networks # network_objects
+
+    def save_as_json(self):
+        return json.dumps(self.networks)
