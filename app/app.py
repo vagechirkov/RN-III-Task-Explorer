@@ -1,4 +1,5 @@
 import streamlit as st
+from network_component.network_component import network_component
 
 # from generate.generation import Network_Generator
 # from solve.rule_based import Rule_Agent
@@ -9,6 +10,8 @@ st.write("""
             This is an interactive application to explore stimuli and task 
             design for the Reward Networks III project. 
          """)
+
+network_component(100)
 
 # ------------------- Sidebar -------------------
 with st.sidebar:
@@ -89,12 +92,13 @@ with st.sidebar:
 
         st.write("Insert custom visualization component here!")
 
-    # -------------------
-    # Compare
-    # -------------------
 
-    with st.expander("Compare"):
-        st.write("TODO")
+# -------------------
+# Compare
+# -------------------
+
+with st.expander("Compare"):
+    st.write("TODO")
 
 # Display scores distribution
 # scores_melt = scores.melt(var_name='Experiment', value_name='Measurement')
