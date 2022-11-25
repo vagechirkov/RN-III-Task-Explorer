@@ -20,7 +20,13 @@ sns.set_theme()
 
 class Reward_Network(gym.Env):
     
-    def __init__(self, network, to_log=False):
+    def __init__(self, network, params):
+        """_summary_
+
+        Args:
+            network (dict): a single network object
+            params (dict): parameters for solving the networks eg n_steps, possible rewards
+        """
         
         #-------------
         # assert tests
@@ -32,24 +38,14 @@ class Reward_Network(gym.Env):
         # initial reward and step values
         self.INIT_REWARD = 0
         self.INIT_STEP = 0
-        self.MAX_STEP = 8
+        self.MAX_STEP = params['n_steps']#8
 
         # network info
         self.id = self.network['network_id']
         self.nodes = [n['node_num'] for n in self.network['nodes']]
         self.action_space = self.network['edges']
-        self.possible_rewards = [-100, -20, 0, 20, 140]
+        self.possible_rewards = params['rewards']#[-100, -20, 0, 20, 140]
         self.reward_range = (min(self.possible_rewards)*self.MAX_STEP,self.network['max_reward'])
-
-        if to_log:
-            # logging info
-            logging_fn = os.path.join('../../logs',f'{self.id}_{time.strftime("%Y_%m-%d_%H-%M-%S")}.log')
-            # start logging:
-            logging.basicConfig(filename=logging_fn, 
-                                level=logging.DEBUG, 
-                                format='%(asctime)s %(message)s',
-                                datefmt='%d/%m/%Y %H:%M:%S')
-
     
 
     def reset(self):
@@ -72,13 +68,9 @@ class Reward_Network(gym.Env):
         self.current_node = action['target_num']
         self.step_counter += 1
 
-        if self.step_counter == 8:
+        if self.step_counter == self.MAX_STEP: #8:
             self.is_done = True
-           
 
-        logging.info(f'Step {self.step_counter} : we go from node {self.source_node} to node {self.current_node}')
-        logging.info(f'Reward for this edge: {action["reward"]} (in total {self.reward_balance})')
-        logging.info(f'DONE? {self.is_done})')
 
         return {'source_node':self.source_node,
                 'current_node':self.current_node,
@@ -111,17 +103,3 @@ class Reward_Network(gym.Env):
                 'n_steps':self.step_counter,
                 'done':self.is_done}
 
-    def render(self):
-        # Render the environment to the screen
-        print('TODO')
-
-
-# For quick testing purposes, comment out if not needed
-
-#with open(os.path.join('../data','test.json')) as json_file:
-#    test = json.load(json_file)
-#env_test = Reward_Network(test[0])
-#check_env(env_test)
-#env_test.reset()
-#print(env_test.get_state())
-#print(env_test.observe())

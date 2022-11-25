@@ -1,3 +1,5 @@
+
+import pydantic; pydantic.class_validators._FUNCS.clear()
 from typing import Dict, Any, Optional
 from pydantic import BaseModel, validator, root_validator
 
@@ -64,12 +66,12 @@ class Edge(BaseModel):
                 'target node number must be a number between 0 and 9')
         return n
 
-    @validator('reward')
-    def check_reward(cls, n):
-        possible_rewards = [-100, -20, 0, 20, 140]
-        if n not in possible_rewards:
-            raise ValueError(f'reward must be a value in {possible_rewards}')
-        return n
+    #@validator('reward')
+    #def check_reward(cls, n):
+    #    possible_rewards = [-100, -20, 0, 20, 140]
+    #    if n not in possible_rewards:
+    #        raise ValueError(f'reward must be a value in {possible_rewards}')
+    #    return n
 
     @validator('arc_type')
     def check_arc_type(cls, n):
