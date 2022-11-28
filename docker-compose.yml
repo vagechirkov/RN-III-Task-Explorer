@@ -1,22 +1,20 @@
-version: "3.3"
+version: "3.7"
 services:
-  devapp:
-    image: streamlit-template-devapp
+  dev_streamlit:
     build:
-      dockerfile: Dockerfile
       context: .
+      dockerfile: Dockerfile
       target: streamlit-template-devapp
     environment:
       PORT: 5000
     volumes:
       - ./app:/app/app
     ports:
-      - "5050:5000"
-  app:
-    image: app
+      - "5000:5000"
+  streamlit:
     build:
-      dockerfile: Dockerfile
       context: .
+      dockerfile: Dockerfile
     environment:
       PORT: 5000
     ports:

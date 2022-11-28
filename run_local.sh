@@ -10,4 +10,4 @@ fi
 pip install -r requirements.txt
 pip install -r requirements_dev.txt
 
-streamlit run app/streamlit.py --server.port=5040 --server.address=0.0.0.0
+streamlit run app/app.py --server.port=5040 --server.address=0.0.0.0
