@@ -1,5 +1,3 @@
-import json
-
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -89,7 +87,13 @@ with st.sidebar:
             G = Network_Generator(gen_params)
             save_path = "TODO"
             networks = G.generate(save_path)
+            # update starting nodes
+            for i in range(len(networks)):
+                networks[i]['nodes'][networks[i]['starting_node']][
+                    'starting_node'] = True
+            print(f"N nets: {len(networks)}")
             st.session_state.networks = networks
+            st.session_state.net_id = 1
             st.success("Networks generated!")
             if to_download_data:
                 data = G.save_as_json()
@@ -124,10 +128,10 @@ with st.sidebar:
 # ------------------------------------------------------------------------------
 with st.expander("Compare strategies 🤖"):
     if "networks" in st.session_state:
-        # create solution data file with all strategies in one file 
-        strategy_data = pd.concat([st.session_state.myopic_solutions,
-                                   st.session_state.loss_solutions],
-                                  ignore_index=True)
+        # create solution data file with all strategies in one file
+        m_df = st.session_state.myopic_solutions
+        l_df = st.session_state.loss_solutions
+        strategy_data = pd.concat([m_df, l_df], ignore_index=True)
         strategy_data_final = strategy_data[strategy_data['step'] == 8]
 
         g = sns.displot(data=strategy_data_final, x="total_reward",
@@ -168,30 +172,26 @@ with st.expander("Compare strategies 🤖"):
         with col1:
             st.metric(
                 "Myopic",
-                value=st.session_state.myopic_solutions[
-                    st.session_state.myopic_solutions, ['step'] == 8][
-                    'total_reward'].mean())
-            avg_step_reward = st.session_state.myopic_solutions.pivot_table(
+                value=m_df[m_df['step'] == 8]['total_reward'].mean())
+            m_avg_step_reward = m_df.pivot_table(
                 index="network_id",
                 columns="step",
                 values="reward").mean(
                 axis=0)
-            avg_step_reward.columns = ['Avg reward']
-            st.dataframe(avg_step_reward)
+            m_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(m_avg_step_reward)
 
         with col2:
             st.metric(
                 "Take Loss then Myopic",
-                value=st.session_state.loss_solutions[
-                    st.session_state.loss_solutions['step'] == 8][
-                    'total_reward'].mean())
-            avg_step_reward = st.session_state.loss_solutions.pivot_table(
+                value=l_df[l_df['step'] == 8]['total_reward'].mean())
+            l_avg_step_reward = l_df.pivot_table(
                 index="network_id",
                 columns="step",
                 values="reward").mean(
                 axis=0)
-            avg_step_reward.columns = ['Avg reward']
-            st.dataframe(avg_step_reward)
+            l_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(l_avg_step_reward)
 
         with col3:
             st.metric("Random", "TODO")
@@ -203,29 +203,30 @@ with st.expander("Compare strategies 🤖"):
 # ------------------------------------------------------------------------------
 with st.expander("Try yourself to solve the network 😎"):
     if "networks" in st.session_state:
-        net_id = st.session_state.net_id if "net_id" in st.session_state else 1
-
-        # add starting node
-        net_to_plot = networks[net_id - 1]
-        net_to_plot['nodes'][net_to_plot['starting_node']][
-            'starting_node'] = True
-        # convert dict to string
-        # set separators=(',', ':') to remove spaces
-        networks_str = json.dumps(net_to_plot, separators=(',', ':'))
-        network_component(timer=100, network_args=networks_str)
+        nets = st.session_state.networks
+        net_id = st.session_state.net_id
+        print(net_id)
+        print(len(nets))
 
         with st.form("vizualization_form", clear_on_submit=False):
-            st.write("### Visualize Networks Options")
-            net_id = st.number_input(
-                label="Insert the network id to visualize",
-                min_value=1,
-                max_value=len(st.session_state.networks),
-                value=1,
-                step=1)
-            updated = st.form_submit_button("Update Network")
-            if updated:
-                st.info('Parameters submitted!')
-                st.session_state.net_id = net_id
+            col1, col2, _ = st.columns(3)
+            with col1:
+                prev_net = st.form_submit_button("Show previous network")
+            with col2:
+                next_net = st.form_submit_button("Show next network")
+
+            if next_net:
+                if st.session_state.net_id < len(nets):
+                    net_id += 1
+                    st.session_state.net_id = net_id
+            if prev_net:
+                if st.session_state.net_id > 0:
+                    net_id -= 1
+                    st.session_state.net_id = net_id
+
+            network_component(
+                timer=60,
+                network=st.session_state.networks[st.session_state.net_id - 1])
 
         # visualization parameters
         # col1, col2 = st.columns(2)
@@ -239,4 +240,4 @@ with st.expander("Try yourself to solve the network 😎"):
         #         ['Myopic', 'Loss'],
         #         ['Myopic'])
     else:
-        network_component(100)
+        network_component(60)
