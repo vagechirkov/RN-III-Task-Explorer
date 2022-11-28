@@ -102,7 +102,7 @@ class NetworkGenerator:
 
         # sample and store training networks
         self.networks = []
-        for i in range(self.n_networks):
+        for _ in range(self.n_networks):
 
             G = self.sample_network()
             N = nx.json_graph.node_link_data(G)
@@ -153,6 +153,7 @@ class NetworkGenerator:
                     pos_map=pos_map, n_steps=self.n_steps,
                     network_id=network_id, **N)
                 self.networks.append(create_network)
+                print(f'Network {len(self.networks)} created')
             else:
                 print(f'counter {c}, nodes are {list(c.keys())} '
                       f'(n={len(list(c.keys()))})')
