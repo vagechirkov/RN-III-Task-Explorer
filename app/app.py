@@ -15,7 +15,6 @@ st.write("""
             This is an interactive application to explore stimuli and task 
             design for the Reward Networks III project. 
          """)
-networks = None
 
 # ------------------------------------------------------------------------------
 #                      sidebar: generate and download options
@@ -27,6 +26,7 @@ with st.sidebar:
 
     # submit parameters for generation
     with st.form("generate_form", clear_on_submit=False):
+        st.write("### Generate Parameters")
         st.write("Select the generation parameters")
         # how many networks to generate?
         gen_params['n_networks'] = st.number_input(
@@ -63,6 +63,9 @@ with st.sidebar:
         # how many nodes in each level?
         # TODO
 
+        # download title
+        st.write("### Download Networks Options")
+
         # download the data yes or no?
         to_download_data = st.checkbox("Download the generated networks")
         # download the data yes or no?
@@ -86,6 +89,7 @@ with st.sidebar:
             G = Network_Generator(gen_params)
             save_path = "TODO"
             networks = G.generate(save_path)
+            st.session_state.networks = networks
             st.success("Networks generated!")
             if to_download_data:
                 data = G.save_as_json()
@@ -93,8 +97,10 @@ with st.sidebar:
             # Solve networks with strategies
             Myopic_agent = Rule_Agent(networks, "myopic", gen_params)
             Myopic_agent.solve()
+            st.session_state.myopic_solutions = Myopic_agent.df
             Loss_agent = Rule_Agent(networks, "take_first_loss", gen_params)
             Loss_agent.solve()
+            st.session_state.loss_solutions = Loss_agent.df
             st.success("Solutions to networks calculated!")
 
     # download button cannot be used inside form
@@ -117,9 +123,10 @@ with st.sidebar:
 #                                   Compare
 # ------------------------------------------------------------------------------
 with st.expander("Compare strategies 🤖"):
-    if networks is not None:
+    if "networks" in st.session_state:
         # create solution data file with all strategies in one file 
-        strategy_data = pd.concat([Myopic_agent.df, Loss_agent.df],
+        strategy_data = pd.concat([st.session_state.myopic_solutions,
+                                   st.session_state.loss_solutions],
                                   ignore_index=True)
         strategy_data_final = strategy_data[strategy_data['step'] == 8]
 
@@ -189,9 +196,11 @@ with st.expander("Compare strategies 🤖"):
 #                            Visualize Networks
 # ------------------------------------------------------------------------------
 with st.expander("Try yourself to solve the network 😎"):
-    if networks is not None:
+    if "networks" in st.session_state:
+        net_id = st.session_state.net_id if "net_id" in st.session_state else 1
+
         # add starting node
-        net_to_plot = networks[0]
+        net_to_plot = networks[net_id - 1]
         net_to_plot['nodes'][net_to_plot['starting_node']][
             'starting_node'] = True
         # convert dict to string
@@ -199,12 +208,25 @@ with st.expander("Try yourself to solve the network 😎"):
         networks_str = json.dumps(net_to_plot, separators=(',', ':'))
         network_component(timer=100, network_args=networks_str)
 
+        with st.form("vizualization_form", clear_on_submit=False):
+            st.write("### Visualize Networks Options")
+            net_id = st.number_input(
+                label="Insert the network id to visualize",
+                min_value=1,
+                max_value=len(st.session_state.networks),
+                value=1,
+                step=1)
+            updated = st.form_submit_button("Update Network")
+            if updated:
+                st.info('Parameters submitted!')
+                st.session_state.net_id = net_id
+
         # visualization parameters
-        col1, col2 = st.columns(2)
-        with col1:
-            network_id = st.selectbox("Which network to try?",
-                                      ("Email", "Home phone",
-                                       "Mobile phone"))
+        # col1, col2 = st.columns(2)
+        # with col1:
+        #     network_id = st.selectbox("Which network to try?",
+        #                               ("Email", "Home phone",
+        #                                "Mobile phone"))
         # with col2:
         #     strategies = st.multiselect(
         #         'Which strategy solution do you want to see?',
