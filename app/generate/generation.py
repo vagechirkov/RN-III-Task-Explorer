@@ -104,54 +104,55 @@ class NetworkGenerator:
         self.networks = []
         for _ in range(self.n_networks):
 
-            G = self.sample_network()
-            N = nx.json_graph.node_link_data(G)
+            g = self.sample_network(self.node_stages)
+            net = nx.json_graph.node_link_data(g)
 
             # NEW: shuffle randomly the order of the nodes in circular layout
-            pos = nx.circular_layout(G)
-            node_order = list(G.nodes(data=True))
+            pos = nx.circular_layout(g)
+            node_order = list(g.nodes(data=True))
             random.shuffle(node_order)
             random_pos = {}
-            for a, b in zip(node_order, [pos[node] for node in G]):
+            for a, b in zip(node_order, [pos[node] for node in g]):
                 random_pos[a[0]] = b
 
             pos_map = {k: {'x': v[0] * 100, 'y': v[1] * -1 * 100}
                        for k, v in random_pos.items()}
 
             # NEW: add vertices for visualization purposes
-            for ii, e in enumerate(G.edges()):
-                if reversed(e) in G.edges():
-                    N['links'][ii]['arc_type'] = 'curved'
+            for ii, e in enumerate(g.edges()):
+                if reversed(e) in g.edges():
+                    net['links'][ii]['arc_type'] = 'curved'
                     arc = nx.draw_networkx_edges(
-                        G,
+                        g,
                         random_pos,
                         edgelist=[e],
                         node_size=self.node_size,
                         connectionstyle=f'arc3, rad = {self.arc_rad}')
                 else:
-                    N['links'][ii]['arc_type'] = 'straight'
+                    net['links'][ii]['arc_type'] = 'straight'
                     arc = nx.draw_networkx_edges(
-                        G, random_pos, edgelist=[e], node_size=self.node_size)
+                        g, random_pos, edgelist=[e], node_size=self.node_size)
 
                 vert = arc[0].get_path().vertices.T[:, :3] * 100
 
-                N['links'][ii]['source_x'] = vert[0, 0]
-                N['links'][ii]['source_y'] = -1 * vert[1, 0]
-                N['links'][ii]['arc_x'] = vert[0, 1]
-                N['links'][ii]['arc_y'] = -1 * vert[1, 1]
-                N['links'][ii]['target_x'] = vert[0, 2]
-                N['links'][ii]['target_y'] = -1 * vert[1, 2]
+                net['links'][ii]['source_x'] = vert[0, 0]
+                net['links'][ii]['source_y'] = -1 * vert[1, 0]
+                net['links'][ii]['arc_x'] = vert[0, 1]
+                net['links'][ii]['arc_y'] = -1 * vert[1, 1]
+                net['links'][ii]['target_x'] = vert[0, 2]
+                net['links'][ii]['target_y'] = -1 * vert[1, 2]
 
             network_id = hashlib.md5(
-                json.dumps(N, sort_keys=True).encode('utf-8')).hexdigest()
+                json.dumps(net, sort_keys=True).encode('utf-8')).hexdigest()
 
-            c = Counter([e['source'] for e in N['links']])
+            c = Counter([e['source'] for e in net['links']])
 
             if all(value == 2 for value in c.values()) and len(
                     list(c.keys())) == 10:
                 create_network = self.create_network_object(
-                    pos_map=pos_map, n_steps=self.n_steps,
-                    network_id=network_id, **N)
+                    pos_map=pos_map,
+                    n_steps=self.n_steps,
+                    network_id=network_id, **net)
                 self.networks.append(create_network)
                 print(f'Network {len(self.networks)} created')
             else:
@@ -170,7 +171,8 @@ class NetworkGenerator:
         G.add_edge(a, b, reward=self.rewards[reward_idx], reward_idx=reward_idx,
                    color=self.colors[reward_idx])
 
-    def new_node(self, G, stage):
+    @staticmethod
+    def add_new_node(G, stage):
         idx = len(G)
         name = string.ascii_uppercase[idx % len(string.ascii_lowercase)]
         G.add_node(idx, name=name, stage=stage)
@@ -185,7 +187,8 @@ class NetworkGenerator:
         b_s = G.nodes[node]['stage']
         return self.from_to.get((a_s, b_s), [])
 
-    def get_min_incoming(self, G, nodes):
+    @staticmethod
+    def get_min_incoming(G, nodes):
         in_de = [G.in_degree(n) for n in nodes]
         min_in_de = min(in_de)
         return [n for n, ind in zip(nodes, in_de) if ind == min_in_de]
@@ -194,25 +197,17 @@ class NetworkGenerator:
         return [n for n in G.nodes()
                 for _ in self.filter_node(G, n, current_node)]
 
-    def sample_network(self):
-        G = nx.DiGraph()
-
-        # node_stages = {
-        #     0: 4,
-        #     1: 1,
-        #     2: 1,
-        #     3: 1
-        # }
-
+    def sample_network(self, node_stages):
+        graph = nx.DiGraph()
         # assigns a new node to a random stage, a total of 3 times
         for i in range(3):
             stage = random.randint(0, 3)
-            self.node_stages[stage] += 1
+            node_stages[stage] += 1
 
         # assigns node to stage
-        for stage, n in self.node_stages.items():
+        for stage, n in node_stages.items():
             for i in range(n):
-                self.new_node(G, stage)
+                self.add_new_node(graph, stage)
 
         start_node = 0
         n_edges_per_node = 2
@@ -220,22 +215,23 @@ class NetworkGenerator:
         for i in range(60):
             current_node = start_node
             for j in range(8):
-                if len(G.out_edges(current_node)) < n_edges_per_node:
-                    potential_nodes = self.find_nodes(G, current_node)
-                    potential_nodes = self.get_min_incoming(G, potential_nodes)
+                if len(graph.out_edges(current_node)) < n_edges_per_node:
+                    potential_nodes = self.find_nodes(graph, current_node)
+                    potential_nodes = self.get_min_incoming(
+                        graph, potential_nodes)
                     next_node = random.choice(potential_nodes)
-                    self.add_link(G, current_node, next_node)
-                    if len(G.edges) == (len(G.nodes) * n_edges_per_node):
+                    self.add_link(graph, current_node, next_node)
+                    if len(graph.edges) == (
+                            len(graph.nodes) * n_edges_per_node):
                         break
                 else:
                     next_node = random.choice(
-                        [e[1] for e in G.out_edges(current_node)])
+                        [e[1] for e in graph.out_edges(current_node)])
                 current_node = next_node
-        return G
+        return graph
 
-    ####### parsing functions ########
-    ####################################
-    def parse_node(self, name, pos_map, id, **kwargs):
+    @staticmethod
+    def parse_node(name, pos_map, id, **kwargs):
         return {
             'node_num': id,
             'display_name': name,
@@ -244,7 +240,8 @@ class NetworkGenerator:
             **pos_map[id]
         }
 
-    def parse_link(self, source, target, reward, reward_idx, arc_type, source_x,
+    @staticmethod
+    def parse_link(source, target, reward, reward_idx, arc_type, source_x,
                    source_y, arc_x, arc_y, target_x, target_y, **_):
         return {
             "source_num": source,
