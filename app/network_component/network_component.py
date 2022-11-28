@@ -14,5 +14,7 @@ def network_component(timer: int = 25, network_args: str = None):
         The time in ms for the component to wait before rendering.
     """
     # args=timer:{timer}
-    url = f"{BASE_URL}custom_args={network_args}&{STORY_COMPONENT}"
+    url = f"{BASE_URL}args=timer:{timer}" \
+          f"&custom_args={network_args}" \
+          f"&{STORY_COMPONENT}"
     components.iframe(url, height=700, width=800)
