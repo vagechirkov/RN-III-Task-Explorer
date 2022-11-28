@@ -166,23 +166,29 @@ with st.expander("Compare strategies 🤖"):
             "average reward obtained at each step per strategy")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Myopic",
-                      value=Myopic_agent.df[Myopic_agent.df['step'] == 8][
-                          'total_reward'].mean())
-            avg_step_reward = Myopic_agent.df.pivot_table(index="network_id",
-                                                          columns="step",
-                                                          values="reward").mean(
+            st.metric(
+                "Myopic",
+                value=st.session_state.myopic_solutions[
+                    st.session_state.myopic_solutions, ['step'] == 8][
+                    'total_reward'].mean())
+            avg_step_reward = st.session_state.myopic_solutions.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(
                 axis=0)
             avg_step_reward.columns = ['Avg reward']
             st.dataframe(avg_step_reward)
 
         with col2:
-            st.metric("Take Loss then Myopic",
-                      value=Loss_agent.df[Loss_agent.df['step'] == 8][
-                          'total_reward'].mean())
-            avg_step_reward = Loss_agent.df.pivot_table(index="network_id",
-                                                        columns="step",
-                                                        values="reward").mean(
+            st.metric(
+                "Take Loss then Myopic",
+                value=st.session_state.loss_solutions[
+                    st.session_state.loss_solutions['step'] == 8][
+                    'total_reward'].mean())
+            avg_step_reward = st.session_state.loss_solutions.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(
                 axis=0)
             avg_step_reward.columns = ['Avg reward']
             st.dataframe(avg_step_reward)
