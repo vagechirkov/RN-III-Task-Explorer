@@ -7,8 +7,8 @@ strategies_palette = {'myopic': 'skyblue', 'take_first_loss': 'orangered',
 def plot_final_rewards(data):
     g = sns.displot(
         data=data, x="total_reward", hue="strategy", kind="hist",
-        palette=strategies_palette)
-    g.set(xlabel='Final total reward', ylabel='Count',
+        palette=strategies_palette, stat='density', common_norm=False)
+    g.set(xlabel='Final total reward',
           title=f'Strategy final total reward comparison')
     g._legend.remove()
     return g

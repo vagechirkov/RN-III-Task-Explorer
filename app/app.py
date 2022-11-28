@@ -147,38 +147,6 @@ with st.expander("Compare strategies 🤖"):
             st.pyplot(g)
         with col2:
             st.pyplot(g3)
-
-        # ---metrics----
-        st.markdown(
-            "### Average final reward obtained per strategy + "
-            "average reward obtained at each step per strategy")
-        col1, col2 = st.columns(2)
-        with col1:
-            avg_val1 = m_df[m_df['step'] == 8]['total_reward'].mean().round(0)
-            st.metric(
-                "Myopic",
-                value=int(avg_val1))
-            m_avg_step_reward = m_df.pivot_table(
-                index="network_id",
-                columns="step",
-                values="reward").mean(axis=0)
-            m_avg_step_reward.columns = ['Avg reward']
-            st.dataframe(m_avg_step_reward)
-
-        with col2:
-            avg_val2 = l_df[l_df['step'] == 8]['total_reward'].mean().round(0)
-            st.metric(
-                "Take Loss then Myopic",
-                value=int(avg_val2))
-            l_avg_step_reward = l_df.pivot_table(
-                index="network_id",
-                columns="step",
-                values="reward").mean(axis=0)
-            l_avg_step_reward.columns = ['Avg reward']
-            st.dataframe(l_avg_step_reward)
-        #
-        # with col3:
-        #     st.metric("Random", "TODO")
     else:
         st.info("Please generate networks first!")
 
@@ -226,8 +194,40 @@ with st.expander("Try yourself to solve the network 😎"):
     else:
         network_component(60)
 
-with st.expander("Show raw dataframes"):
+with st.expander("Show solution dataframes 📊"):
     if "networks" in st.session_state:
+        # ---metrics----
+        st.markdown(
+            "#### Average final reward obtained per strategy + "
+            "average reward obtained at each step per strategy")
+        col1, col2 = st.columns(2)
+        with col1:
+            avg_val1 = m_df[m_df['step'] == 8]['total_reward'].mean().round(0)
+            st.metric(
+                "Myopic",
+                value=int(avg_val1))
+            m_avg_step_reward = m_df.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(axis=0)
+            m_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(m_avg_step_reward)
+
+        with col2:
+            avg_val2 = l_df[l_df['step'] == 8]['total_reward'].mean().round(0)
+            st.metric(
+                "Take Loss then Myopic",
+                value=int(avg_val2))
+            l_avg_step_reward = l_df.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(axis=0)
+            l_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(l_avg_step_reward)
+        #
+        # with col3:
+        #     st.metric("Random", "TODO")
+
         st.write("## Myopic solutions")
         st.dataframe(st.session_state.myopic_solutions)
         st.write("## Take first loss solutions")
