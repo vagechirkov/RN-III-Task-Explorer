@@ -4,7 +4,7 @@ import streamlit as st
 
 from generate.generation import NetworkGenerator
 from network_component.network_component import network_component
-from solve.rule_based import Rule_Agent
+from solve.rule_based import RuleAgent
 
 st.set_page_config(page_title="RN III Task Explorer", layout="wide")
 
@@ -31,7 +31,7 @@ with st.sidebar:
             label='How many networks do you want to generate?',
             min_value=1,
             max_value=100_000,
-            value=1,
+            value=11,
             step=10)
         # how many rewards do you want?
         gen_params['n_rewards'] = st.number_input(
@@ -87,10 +87,12 @@ with st.sidebar:
             net_generator = NetworkGenerator(gen_params)
             networks = net_generator.generate()
             # check if the size of the networks is valid
-            assert len(networks) == gen_params['n_networks'], \
-                f"The number of generated networks {len(networks)} is not " \
-                f" equal to the number of networks requested " \
-                f"{gen_params['n_networks']}"
+            if len(networks) != gen_params['n_networks']:
+                st.error(
+                    f"The number of generated networks {len(networks)} is not "
+                    f" equal to the number of networks requested "
+                    f"{gen_params['n_networks']}")
+
             # update starting nodes
             for i in range(len(networks)):
                 networks[i]['nodes'][networks[i]['starting_node']][
@@ -103,12 +105,11 @@ with st.sidebar:
                 data = net_generator.save_as_json()
 
             # Solve networks with strategies
-            Myopic_agent = Rule_Agent(networks, "myopic", gen_params)
-            Myopic_agent.solve()
-            st.session_state.myopic_solutions = Myopic_agent.df
-            Loss_agent = Rule_Agent(networks, "take_first_loss", gen_params)
-            Loss_agent.solve()
-            st.session_state.loss_solutions = Loss_agent.df
+            myopic_agent = RuleAgent(networks, "myopic", gen_params)
+
+            st.session_state.myopic_solutions = myopic_agent.solve()
+            loss_agent = RuleAgent(networks, "take_first_loss", gen_params)
+            st.session_state.loss_solutions = loss_agent.solve()
             st.success("Solutions to networks calculated!")
 
     # download button cannot be used inside form
@@ -124,7 +125,7 @@ with st.sidebar:
             file_name='solutions_myopic.json')
         st.download_button(
             label="Download solutions (loss)",
-            data=Loss_agent.save_solutions_frontend(),
+            data=loss_agent.save_solutions_frontend(),
             file_name='solutions_loss.json')
 
 # ------------------------------------------------------------------------------
@@ -245,3 +246,12 @@ with st.expander("Try yourself to solve the network 😎"):
         #         ['Myopic'])
     else:
         network_component(60)
+
+with st.expander("Show raw dataframes"):
+    if "networks" in st.session_state:
+        st.write("## Myopic solutions")
+        st.dataframe(st.session_state.myopic_solutions)
+        st.write("## Take first loss solutions")
+        st.dataframe(st.session_state.loss_solutions)
+    else:
+        st.info("Please generate networks first!")
