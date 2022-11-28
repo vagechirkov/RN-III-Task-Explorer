@@ -140,45 +140,45 @@ with st.expander("Compare strategies 🤖"):
         strategy_data = pd.concat([m_df, l_df], ignore_index=True)
         strategy_data_final = strategy_data[strategy_data['step'] == 8]
 
+        col1, col2 = st.columns([1, 2])
         g = plot_final_rewards(strategy_data_final)
-        # show figure in streamlit
-        st.pyplot(g)
-
         g3 = plot_avg_reward_per_step(strategy_data)
-        # show figure in streamlit
-        st.pyplot(g3)
+        with col1:
+            st.pyplot(g)
+        with col2:
+            st.pyplot(g3)
 
         # ---metrics----
         st.markdown(
             "### Average final reward obtained per strategy + "
             "average reward obtained at each step per strategy")
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
+            avg_val1 = m_df[m_df['step'] == 8]['total_reward'].mean().round(0)
             st.metric(
                 "Myopic",
-                value=m_df[m_df['step'] == 8]['total_reward'].mean())
+                value=int(avg_val1))
             m_avg_step_reward = m_df.pivot_table(
                 index="network_id",
                 columns="step",
-                values="reward").mean(
-                axis=0)
+                values="reward").mean(axis=0)
             m_avg_step_reward.columns = ['Avg reward']
             st.dataframe(m_avg_step_reward)
 
         with col2:
+            avg_val2 = l_df[l_df['step'] == 8]['total_reward'].mean().round(0)
             st.metric(
                 "Take Loss then Myopic",
-                value=l_df[l_df['step'] == 8]['total_reward'].mean())
+                value=int(avg_val2))
             l_avg_step_reward = l_df.pivot_table(
                 index="network_id",
                 columns="step",
-                values="reward").mean(
-                axis=0)
+                values="reward").mean(axis=0)
             l_avg_step_reward.columns = ['Avg reward']
             st.dataframe(l_avg_step_reward)
-
-        with col3:
-            st.metric("Random", "TODO")
+        #
+        # with col3:
+        #     st.metric("Random", "TODO")
     else:
         st.info("Please generate networks first!")
 
