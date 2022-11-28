@@ -259,7 +259,7 @@ class Network_Generator:
 
     ##### generation and storing networks in json file ######
     #########################################################
-    #@st.cache(allow_reuse=False)
+    @st.cache(suppress_st_warning=True)
     def generate(self,save_path=None):
         """
         Using the functions defined above this method generates networks with
