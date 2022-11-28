@@ -1,10 +1,11 @@
 import pandas as pd
-import seaborn as sns
 import streamlit as st
 
 from generate.generation import NetworkGenerator
 from network_component.network_component import network_component
-from solve.rule_based import Rule_Agent
+from plotting.plotting_solutions import plot_final_rewards, \
+    plot_avg_reward_per_step
+from solve.rule_based import RuleAgent
 
 st.set_page_config(page_title="RN III Task Explorer", layout="wide")
 
@@ -31,7 +32,7 @@ with st.sidebar:
             label='How many networks do you want to generate?',
             min_value=1,
             max_value=100_000,
-            value=1,
+            value=11,
             step=10)
         # how many rewards do you want?
         gen_params['n_rewards'] = st.number_input(
@@ -87,10 +88,12 @@ with st.sidebar:
             net_generator = NetworkGenerator(gen_params)
             networks = net_generator.generate()
             # check if the size of the networks is valid
-            assert len(networks) == gen_params['n_networks'], \
-                f"The number of generated networks {len(networks)} is not " \
-                f" equal to the number of networks requested " \
-                f"{gen_params['n_networks']}"
+            if len(networks) != gen_params['n_networks']:
+                st.error(
+                    f"The number of generated networks {len(networks)} is not "
+                    f" equal to the number of networks requested "
+                    f"{gen_params['n_networks']}")
+
             # update starting nodes
             for i in range(len(networks)):
                 networks[i]['nodes'][networks[i]['starting_node']][
@@ -103,12 +106,11 @@ with st.sidebar:
                 data = net_generator.save_as_json()
 
             # Solve networks with strategies
-            Myopic_agent = Rule_Agent(networks, "myopic", gen_params)
-            Myopic_agent.solve()
-            st.session_state.myopic_solutions = Myopic_agent.df
-            Loss_agent = Rule_Agent(networks, "take_first_loss", gen_params)
-            Loss_agent.solve()
-            st.session_state.loss_solutions = Loss_agent.df
+            myopic_agent = RuleAgent(networks, "myopic", gen_params)
+
+            st.session_state.myopic_solutions = myopic_agent.solve()
+            loss_agent = RuleAgent(networks, "take_first_loss", gen_params)
+            st.session_state.loss_solutions = loss_agent.solve()
             st.success("Solutions to networks calculated!")
 
     # download button cannot be used inside form
@@ -120,11 +122,11 @@ with st.sidebar:
     if to_download_solutions:
         st.download_button(
             label="Download solutions (myopic)",
-            data=Myopic_agent.save_solutions_frontend(),
+            data=myopic_agent.save_solutions_frontend(),
             file_name='solutions_myopic.json')
         st.download_button(
             label="Download solutions (loss)",
-            data=Loss_agent.save_solutions_frontend(),
+            data=loss_agent.save_solutions_frontend(),
             file_name='solutions_loss.json')
 
 # ------------------------------------------------------------------------------
@@ -138,67 +140,13 @@ with st.expander("Compare strategies 🤖"):
         strategy_data = pd.concat([m_df, l_df], ignore_index=True)
         strategy_data_final = strategy_data[strategy_data['step'] == 8]
 
-        g = sns.displot(data=strategy_data_final, x="total_reward",
-                        hue="strategy", kind="hist")
-        g.set(xlabel='Final total reward', ylabel='Count',
-              title=f'Strategy final total reward comparison')
-        # show figure in streamlit
-        st.pyplot(g)
-
-        # show figure in streamlit
-        # st.pyplot(sns.boxplot(data=strategy_data_final,x="strategy", y="total_reward"))
-
-        g3 = sns.relplot(
-            data=strategy_data,
-            x="step",
-            y="reward",
-            col='strategy',
-            hue='strategy',
-            height=4,
-            aspect=.9,
-            kind="line",
-            palette={'myopic': 'skyblue', 'take_first_loss': 'orangered',
-                     'random': 'springgreen'}
-        )
-        for ax in g3.axes.flat:
-            labels = ax.get_xticklabels()  # get x labels
-            ax.set_xticks(ticks=[1, 2, 3, 4, 5, 6, 7, 8])  # set new labels
-            ax.set_xticklabels(fontsize=10,
-                               labels=[str(i) for i in range(1, 9)])
-        # show figure in streamlit
-        st.pyplot(g3)
-
-        # ---metrics----
-        st.markdown(
-            "### Average final reward obtained per strategy + "
-            "average reward obtained at each step per strategy")
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns([1, 2])
+        g = plot_final_rewards(strategy_data_final)
+        g3 = plot_avg_reward_per_step(strategy_data)
         with col1:
-            st.metric(
-                "Myopic",
-                value=m_df[m_df['step'] == 8]['total_reward'].mean())
-            m_avg_step_reward = m_df.pivot_table(
-                index="network_id",
-                columns="step",
-                values="reward").mean(
-                axis=0)
-            m_avg_step_reward.columns = ['Avg reward']
-            st.dataframe(m_avg_step_reward)
-
+            st.pyplot(g)
         with col2:
-            st.metric(
-                "Take Loss then Myopic",
-                value=l_df[l_df['step'] == 8]['total_reward'].mean())
-            l_avg_step_reward = l_df.pivot_table(
-                index="network_id",
-                columns="step",
-                values="reward").mean(
-                axis=0)
-            l_avg_step_reward.columns = ['Avg reward']
-            st.dataframe(l_avg_step_reward)
-
-        with col3:
-            st.metric("Random", "TODO")
+            st.pyplot(g3)
     else:
         st.info("Please generate networks first!")
 
@@ -245,3 +193,44 @@ with st.expander("Try yourself to solve the network 😎"):
         #         ['Myopic'])
     else:
         network_component(60)
+
+with st.expander("Show solution dataframes 📊"):
+    if "networks" in st.session_state:
+        # ---metrics----
+        st.markdown(
+            "#### Average final reward obtained per strategy + "
+            "average reward obtained at each step per strategy")
+        col1, col2 = st.columns(2)
+        with col1:
+            avg_val1 = m_df[m_df['step'] == 8]['total_reward'].mean().round(0)
+            st.metric(
+                "Myopic",
+                value=int(avg_val1))
+            m_avg_step_reward = m_df.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(axis=0)
+            m_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(m_avg_step_reward)
+
+        with col2:
+            avg_val2 = l_df[l_df['step'] == 8]['total_reward'].mean().round(0)
+            st.metric(
+                "Take Loss then Myopic",
+                value=int(avg_val2))
+            l_avg_step_reward = l_df.pivot_table(
+                index="network_id",
+                columns="step",
+                values="reward").mean(axis=0)
+            l_avg_step_reward.columns = ['Avg reward']
+            st.dataframe(l_avg_step_reward)
+        #
+        # with col3:
+        #     st.metric("Random", "TODO")
+
+        st.write("## Myopic solutions")
+        st.dataframe(st.session_state.myopic_solutions)
+        st.write("## Take first loss solutions")
+        st.dataframe(st.session_state.loss_solutions)
+    else:
+        st.info("Please generate networks first!")
