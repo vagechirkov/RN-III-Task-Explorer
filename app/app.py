@@ -1,6 +1,9 @@
 import json
 
 import streamlit as st
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from network_component.network_component import network_component
 
 from generate.generation import Network_Generator
@@ -156,14 +159,55 @@ else:
 # -------------------
 
 with st.expander("Compare"):
-    st.write("TODO")
+    if networks is not None:
+        # create solution data file with all strategies in one file 
+        strategy_data = pd.concat([Myopic_agent.df,Loss_agent.df],ignore_index=True)
+        strategy_data_final=strategy_data[strategy_data['step']==8]
 
-# Display scores distribution
-# scores_melt = scores.melt(var_name='Experiment', value_name='Measurement')
-# fig = sns.displot(scores_melt,
-#                   x='Measurement',
-#                   binwidth=.2,
-#                   hue='Experiment',
-#                   aspect=2,
-#                   element='step')
-# st.pyplot(fig)
+        g = sns.displot(data=strategy_data_final,x="total_reward", hue="strategy", kind="hist")
+        g.set(xlabel='Final total reward',ylabel='Count',title=f'Strategy final total reward comparison')
+        # show figure in streamlit
+        st.pyplot(g)
+
+        
+        # show figure in streamlit
+        # st.pyplot(sns.boxplot(data=strategy_data_final,x="strategy", y="total_reward"))
+
+        g3 = sns.relplot(
+                        data=strategy_data,
+                        x="step", 
+                        y="reward", 
+                        col='strategy',
+                        hue='strategy',
+                        height=4, 
+                        aspect=.9, 
+                        kind="line",
+                        palette={'myopic':'skyblue','take_first_loss':'orangered','random':'springgreen'}
+                        )
+        for ax in g3.axes.flat:
+            labels = ax.get_xticklabels() # get x labels
+            ax.set_xticks(ticks=[1,2,3,4,5,6,7,8]) # set new labels
+            ax.set_xticklabels(fontsize=10,labels=[str(i) for i in range(1,9)])
+        # show figure in streamlit
+        st.pyplot(g3)
+
+        # ---metrics----
+        st.markdown("### Average final reward obtained per strategy + average reward obtained at each step per strategy")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Myopic", 
+                    value=Myopic_agent.df[Myopic_agent.df['step']==8]['total_reward'].mean())
+            avg_step_reward = Myopic_agent.df.pivot_table(index="network_id", columns="step", values="reward").mean(axis=0)
+            avg_step_reward.columns = ['Avg reward']
+            st.dataframe(avg_step_reward)
+        
+        with col2:
+            st.metric("Take Loss then Myopic",
+                        value=Loss_agent.df[Loss_agent.df['step']==8]['total_reward'].mean())
+            avg_step_reward = Loss_agent.df.pivot_table(index="network_id", columns="step", values="reward").mean(axis=0)
+            avg_step_reward.columns = ['Avg reward']
+            st.dataframe(avg_step_reward)
+
+        with col3:
+            st.metric("Random", "TODO")
+
