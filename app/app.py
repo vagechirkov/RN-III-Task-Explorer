@@ -1,9 +1,10 @@
 import pandas as pd
-import seaborn as sns
 import streamlit as st
 
 from generate.generation import NetworkGenerator
 from network_component.network_component import network_component
+from plotting.plotting_solutions import plot_final_rewards, \
+    plot_avg_reward_per_step
 from solve.rule_based import RuleAgent
 
 st.set_page_config(page_title="RN III Task Explorer", layout="wide")
@@ -121,7 +122,7 @@ with st.sidebar:
     if to_download_solutions:
         st.download_button(
             label="Download solutions (myopic)",
-            data=Myopic_agent.save_solutions_frontend(),
+            data=myopic_agent.save_solutions_frontend(),
             file_name='solutions_myopic.json')
         st.download_button(
             label="Download solutions (loss)",
@@ -139,33 +140,11 @@ with st.expander("Compare strategies 🤖"):
         strategy_data = pd.concat([m_df, l_df], ignore_index=True)
         strategy_data_final = strategy_data[strategy_data['step'] == 8]
 
-        g = sns.displot(data=strategy_data_final, x="total_reward",
-                        hue="strategy", kind="hist")
-        g.set(xlabel='Final total reward', ylabel='Count',
-              title=f'Strategy final total reward comparison')
+        g = plot_final_rewards(strategy_data_final)
         # show figure in streamlit
         st.pyplot(g)
 
-        # show figure in streamlit
-        # st.pyplot(sns.boxplot(data=strategy_data_final,x="strategy", y="total_reward"))
-
-        g3 = sns.relplot(
-            data=strategy_data,
-            x="step",
-            y="reward",
-            col='strategy',
-            hue='strategy',
-            height=4,
-            aspect=.9,
-            kind="line",
-            palette={'myopic': 'skyblue', 'take_first_loss': 'orangered',
-                     'random': 'springgreen'}
-        )
-        for ax in g3.axes.flat:
-            labels = ax.get_xticklabels()  # get x labels
-            ax.set_xticks(ticks=[1, 2, 3, 4, 5, 6, 7, 8])  # set new labels
-            ax.set_xticklabels(fontsize=10,
-                               labels=[str(i) for i in range(1, 9)])
+        g3 = plot_avg_reward_per_step(strategy_data)
         # show figure in streamlit
         st.pyplot(g3)
 
