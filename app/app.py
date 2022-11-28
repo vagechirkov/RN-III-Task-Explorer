@@ -84,9 +84,13 @@ with st.sidebar:
                     "correspond")
 
             # Network_Generator class
-            G = NetworkGenerator(gen_params)
-            save_path = "TODO"
-            networks = G.generate(save_path)
+            net_generator = NetworkGenerator(gen_params)
+            networks = net_generator.generate()
+            # check if the size of the networks is valid
+            assert len(networks) == gen_params['n_networks'], \
+                f"The number of generated networks {len(networks)} is not " \
+                f" equal to the number of networks requested " \
+                f"{gen_params['n_networks']}"
             # update starting nodes
             for i in range(len(networks)):
                 networks[i]['nodes'][networks[i]['starting_node']][
@@ -96,7 +100,7 @@ with st.sidebar:
             st.session_state.net_id = 1
             st.success("Networks generated!")
             if to_download_data:
-                data = G.save_as_json()
+                data = net_generator.save_as_json()
 
             # Solve networks with strategies
             Myopic_agent = Rule_Agent(networks, "myopic", gen_params)
