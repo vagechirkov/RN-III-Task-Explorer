@@ -38,10 +38,7 @@ class NetworkGenerator:
         self.n_networks = params['n_networks']
         self.n_steps = params['n_steps']
         self.n_levels = params['n_levels']
-        self.node_stages = {0: 4,
-                            1: 1,
-                            2: 1,
-                            3: 1}
+        self.node_stages = {0: 4, 1: 1, 2: 1, 3: 1}
 
         # parameters for visualization
         self.node_size = 2200
@@ -103,8 +100,8 @@ class NetworkGenerator:
         # sample and store training networks
         self.networks = []
         for _ in range(self.n_networks):
-
-            g = self.sample_network(self.node_stages)
+            # NOTE: make copy of the node_stages dict to avoid overwriting
+            g = self.sample_network(node_stages=self.node_stages.copy())
             net = nx.json_graph.node_link_data(g)
 
             # NEW: shuffle randomly the order of the nodes in circular layout
@@ -203,7 +200,6 @@ class NetworkGenerator:
         for i in range(3):
             stage = random.randint(0, 3)
             node_stages[stage] += 1
-
         # assigns node to stage
         for stage, n in node_stages.items():
             for i in range(n):
