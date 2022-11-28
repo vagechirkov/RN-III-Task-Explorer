@@ -17,10 +17,12 @@ def network_component(timer: int = 25, network: dict = None):
     network : dict
         The network to be rendered.
     """
-    # convert dict to string
-    # set separators=(',', ':') to remove spaces
-    network_args = json.dumps(network, separators=(',', ':'))
+
     url = f"{BASE_URL}args=timer:{timer}" \
-          f"&custom_args={network_args}" \
           f"&{STORY_COMPONENT}"
+    if network is not None:
+        # convert dict to string
+        # set separators=(',', ':') to remove spaces
+        network_args = json.dumps(network, separators=(',', ':'))
+        url += f"&custom_args={network_args}"
     components.iframe(url, height=700, width=800)
