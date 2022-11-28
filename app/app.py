@@ -9,7 +9,8 @@ from network_component.network_component import network_component
 from generate.generation import Network_Generator
 from solve.rule_based import Rule_Agent
 
-st.set_page_config(page_title="RN III Task Explorer")
+st.set_page_config(page_title="RN III Task Explorer", layout="wide")
+
 st.write("""
             # RN III Task Explorer
             This is an interactive application to explore stimuli and task 
@@ -141,24 +142,24 @@ with st.sidebar:
 
         st.write("Insert custom visualization component here!")
 
-
-if networks is not None:
-    # add starting node
-    net_to_plot = networks[0]
-    net_to_plot['nodes'][net_to_plot['starting_node']]['starting_node'] = True
-    # convert dict to string
-    # set separators=(',', ':') to remove spaces
-    networks_str = json.dumps(net_to_plot, separators=(',', ':'))
-    network_component(timer=100, network_args=networks_str)
-else:
-    network_component(100)
+with st.expander("Try yourself to solve the network 😎"):
+    if networks is not None:
+        # add starting node
+        net_to_plot = networks[0]
+        net_to_plot['nodes'][net_to_plot['starting_node']]['starting_node'] = True
+        # convert dict to string
+        # set separators=(',', ':') to remove spaces
+        networks_str = json.dumps(net_to_plot, separators=(',', ':'))
+        network_component(timer=100, network_args=networks_str)
+    else:
+        network_component(100)
 
 
 # -------------------
 # Compare
 # -------------------
 
-with st.expander("Compare"):
+with st.expander("Compare strategies 🤖"):
     if networks is not None:
         # create solution data file with all strategies in one file 
         strategy_data = pd.concat([Myopic_agent.df,Loss_agent.df],ignore_index=True)
@@ -210,4 +211,5 @@ with st.expander("Compare"):
 
         with col3:
             st.metric("Random", "TODO")
-
+    else:
+        st.info("Please generate networks first!")
