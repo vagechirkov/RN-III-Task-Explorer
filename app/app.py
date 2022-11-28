@@ -2,7 +2,7 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 
-from generate.generation import Network_Generator
+from generate.generation import NetworkGenerator
 from network_component.network_component import network_component
 from solve.rule_based import Rule_Agent
 
@@ -84,7 +84,7 @@ with st.sidebar:
                     "correspond")
 
             # Network_Generator class
-            G = Network_Generator(gen_params)
+            G = NetworkGenerator(gen_params)
             save_path = "TODO"
             networks = G.generate(save_path)
             # update starting nodes
