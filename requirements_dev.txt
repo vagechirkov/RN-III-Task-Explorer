@@ -3,3 +3,5 @@ ipython
 autopep8
 ipykernel
 flake8
+black
+pytest
