@@ -7,7 +7,7 @@ from collections import Counter
 import networkx as nx
 import numpy as np
 
-from models.network import Network
+from models.network import Network, Node, Edge
 from models.environment import Environment
 
 # from .utils import parse_network, calculate_q_value, calculate_trace
@@ -124,19 +124,18 @@ class NetworkGenerator:
                     f"(n={len(list(c.keys()))})"
                 )
 
-        self.network_objects = [Network(**n) for n in self.networks]
         return self.networks
 
     # individual network building functions
     #######################################
-    def add_link(self, G, from_node, to_node):
-        from_level = G.nodes[from_node]["level"]
-        to_level = G.nodes[to_node]["level"]
+    def add_link(self, G, source_node, target_node):
+        from_level = G.nodes[source_node]["level"]
+        to_level = G.nodes[target_node]["level"]
         reward_idx = random.choice(self.from_to[(from_level, to_level)])
         reward = self.env.rewards[reward_idx]
         G.add_edge(
-            from_node,
-            to_node,
+            source_node,
+            target_node,
             reward=reward.reward,
             reward_idx=reward_idx,
             color=reward.color,
@@ -165,17 +164,17 @@ class NetworkGenerator:
             reverse=False,
         )
 
-    def edge_is_allowed(self, G, from_node, to_node):
-        if from_node == to_node:
+    def edge_is_allowed(self, G, source_node, target_node):
+        if source_node == target_node:
             return False
-        if to_node in G[from_node]:
+        if target_node in G[source_node]:
             return False
-        from_level = G.nodes[from_node]["level"]
-        to_level = G.nodes[to_node]["level"]
+        from_level = G.nodes[source_node]["level"]
+        to_level = G.nodes[target_node]["level"]
         return (from_level, to_level) in self.from_to
 
-    def allowed_nodes(self, G, nodes, from_node):
-        return [node for node in nodes if self.edge_is_allowed(G, from_node, node)]
+    def allowed_target_nodes(self, G, nodes, source_node):
+        return [node for node in nodes if self.edge_is_allowed(G, source_node, node)]
 
     def assign_levels(self, graph):
         levels = self.env.levels.copy()
@@ -212,74 +211,50 @@ class NetworkGenerator:
 
         self.assign_levels(graph)
         for i in range(self.env.n_edges_per_node * self.env.n_nodes):
-            allowed_from_nodes = [
+            allowed_source_nodes = [
                 n
                 for n in graph.nodes
-                if not graph.out_degree(n) >= self.env.n_edges_per_node
+                if graph.out_degree(n) < self.env.n_edges_per_node
             ]
-            if len(allowed_from_nodes) == 0:
+            if len(allowed_source_nodes) == 0:
                 raise ValueError("No allowed nodes to connect from.")
-            from_node = self.nodes_random_sorted_by_out_degree(
-                graph, allowed_from_nodes
+            source_node = self.nodes_random_sorted_by_out_degree(
+                graph, allowed_source_nodes
             )[0]
-            allowed_to_nodes = self.allowed_nodes(graph, graph.nodes, from_node)
-            if len(allowed_to_nodes) == 0:
+            allowed_target_nodes = self.allowed_target_nodes(
+                graph, graph.nodes, source_node
+            )
+            if len(allowed_target_nodes) == 0:
                 raise ValueError("No allowed nodes to connect to.")
-            to_node = self.nodes_random_sorted_by_in_degree(graph, allowed_to_nodes)[0]
-            self.add_link(graph, from_node, to_node)
+            target_node = self.nodes_random_sorted_by_in_degree(
+                graph, allowed_target_nodes
+            )[0]
+            self.add_link(graph, source_node, target_node)
         return graph
 
     @staticmethod
-    def parse_node(name, pos_map, id, **kwargs):
-        return {
-            "node_num": id,
-            "display_name": name,
-            "node_size": 3,
-            "level": kwargs["level"],
+    def parse_node(name, pos_map, level, id, **__):
+        return Node(
+            node_num=id,
+            display_name=name,
+            node_size=3,
+            level=level,
             **pos_map[id],
-        }
+        )
 
     @staticmethod
-    def parse_link(
-        source,
-        target,
-        reward,
-        reward_idx,
-        arc_type,
-        source_x,
-        source_y,
-        arc_x,
-        arc_y,
-        target_x,
-        target_y,
-        **_,
-    ):
-        return {
-            "source_num": source,
-            "target_num": target,
-            "reward": reward,
-            "arc_type": arc_type,
-            "source_x": source_x,
-            "source_y": source_y,
-            "arc_x": arc_x,
-            "arc_y": arc_y,
-            "target_x": target_x,
-            "target_y": target_y,
-        }
+    def parse_link(source, target, **props):
+        return Edge(source_num=source, target_num=target, **props)
 
-    def create_base_network_object(
-        self, pos_map, starting_node=0, *, nodes, links, network_id, n_steps, **kwargs
+    def create_network_object(
+        self, pos_map, starting_node=0, *, nodes, links, network_id, **kwargs
     ):
-        return {
-            "network_id": network_id,
-            "nodes": [self.parse_node(pos_map=pos_map, **n) for n in nodes],
-            "edges": [self.parse_link(**l) for l in links],
-            "starting_node": starting_node,
-        }
-
-    def create_network_object(self, **kwargs):
-        network = self.create_base_network_object(**kwargs)
-        return network
+        return Network(
+            nodes=[self.parse_node(**n, pos_map=pos_map) for n in nodes],
+            edges=[self.parse_link(**l) for l in links],
+            starting_node=starting_node,
+            network_id=network_id,
+        )
 
     def save_as_json(self):
         return json.dumps(self.networks)

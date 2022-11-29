@@ -97,6 +97,8 @@ with st.sidebar:
             # Network_Generator class
             net_generator = NetworkGenerator(environment)
             networks = net_generator.generate(gen_params['n_networks'])
+            networks = [n.dict() for n in networks]
+
             # check if the size of the networks is valid
             if len(networks) != gen_params['n_networks']:
                 st.error(
