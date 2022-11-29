@@ -49,7 +49,7 @@ with st.sidebar:
         gen_params['n_steps'] = st.number_input(
             label='How many steps to solve the network?',
             min_value=2,
-            max_value=10,
+            max_value=16,
             value=8,
             step=1)
         gen_params['n_levels'] = st.number_input(
@@ -84,9 +84,19 @@ with st.sidebar:
                     "Number of rewards and rewards in the text field "
                     "correspond")
 
+            # DEBUG------------------------------------------------------------------------------
+            from utils.io import load_yaml
+            from models.environment import Environment
+
+            environment_file = "app/tests/test_environment.yml"
+            environment = load_yaml(environment_file)
+            environment = Environment(**environment)
+
+            # ------------------------------------------------------------------------------
+
             # Network_Generator class
-            net_generator = NetworkGenerator(gen_params)
-            networks = net_generator.generate()
+            net_generator = NetworkGenerator(environment)
+            networks = net_generator.generate(gen_params['n_networks'])
             # check if the size of the networks is valid
             if len(networks) != gen_params['n_networks']:
                 st.error(

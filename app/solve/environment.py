@@ -38,14 +38,16 @@ class Reward_Network(gym.Env):
         # initial reward and step values
         self.INIT_REWARD = 0
         self.INIT_STEP = 0
+        
         self.MAX_STEP = params['n_steps']#8
 
         # network info
         self.id = self.network['network_id']
         self.nodes = [n['node_num'] for n in self.network['nodes']]
         self.action_space = self.network['edges']
-        self.possible_rewards = params['rewards']#[-100, -20, 0, 20, 140]
-        self.reward_range = (min(self.possible_rewards)*self.MAX_STEP,self.network['max_reward'])
+        self.possible_rewards = list(set([e['reward'] for e in self.network['edges']]))
+        # self.possible_rewards = params['rewards']#[-100, -20, 0, 20, 140]
+        self.reward_range = (min(self.possible_rewards)*self.MAX_STEP,max(self.possible_rewards)*self.MAX_STEP)
     
 
     def reset(self):

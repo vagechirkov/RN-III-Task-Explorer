@@ -57,7 +57,7 @@ class RuleAgent:
             return random.choice(possible_actions)
 
         # take first loss -> select among possible actions the one that gives best reward BUT make sure to take a first big loss (-100 but can also change)
-        if self.strategy == 'take_first_loss' and self.loss_counter < 1 and self.min_reward in possible_actions_rewards:
+        if self.strategy == 'take_first_loss' and self.loss_counter < 2 and self.min_reward in possible_actions_rewards:
             self.loss_counter += 1
 
             if len(np.argwhere(possible_actions_rewards == self.min_reward)[
