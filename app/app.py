@@ -50,7 +50,34 @@ with st.sidebar:
             value=changed_env['n_steps'],
             step=1)
 
+        # changed_env['n_edges_per_node'] = st.number_input(
+        #     label='How many edges per node?',
+        #     min_value=1,
+        #     max_value=6,
+        #     value=changed_env['n_edges_per_node'],
+        #     step=1)
+
         for key, value in changed_env.items():
+            if key == 'levels':
+                with st.expander('Levels'):
+                    for i, level in enumerate(value):
+                        changed_env['levels'][i][
+                            'min_n_nodes'] = st.number_input(
+                            label=f'Min nodes in level {i}?',
+                            min_value=1,
+                            max_value=20,
+                            value=int(level['min_n_nodes']),
+                            step=1)
+
+                        if level['max_n_nodes']:
+                            changed_env['levels'][i][
+                                'max_n_nodes'] = st.number_input(
+                                label=f'Max nodes in level {i}',
+                                min_value=1,
+                                max_value=20,
+                                value=int(level['max_n_nodes']),
+                                step=1)
+
             if key == "rewards":
                 with st.expander('Rewards'):
                     for f, _reward in enumerate(value):
