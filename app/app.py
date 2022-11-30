@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import yaml
 
 from generate.generation import NetworkGenerator
 from models.environment import Environment
@@ -7,8 +8,9 @@ from network_component.network_component import network_component
 from plotting.plotting_solutions import plot_final_rewards, \
     plot_avg_reward_per_step
 from solve.rule_based import RuleAgent
-from utils.dict_input import dict_input
 from utils.io import load_yaml
+
+st.set_page_config(page_title="RN III Task Explorer", layout="wide")
 
 st.write("""
             # RN III Task Explorer
@@ -28,6 +30,24 @@ with st.sidebar:
     gen_params = {}
     data = None
 
+    with st.expander("Upload environment file", expanded=False):
+        with st.form(key="upload_params"):
+            file = st.file_uploader("Upload environment parameters file",
+                                    type="yml")
+            submit_file = st.form_submit_button(label="Submit")
+
+            if submit_file:
+                if file is not None:
+                    try:
+                        data = yaml.safe_load(file)
+                        st.success("File uploaded successfully")
+                        st.session_state.gen_env = Environment(**data)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+                else:
+                    st.error("Please upload a file")
+
     # submit parameters for generation
     with st.form("generate_form", clear_on_submit=False):
         st.write("### Generate Parameters")
@@ -39,36 +59,68 @@ with st.sidebar:
             max_value=100_000,
             value=11,
             step=10)
-        # how many rewards do you want?
-        gen_params['n_rewards'] = st.number_input(
-            label='How many rewards in the network?',
-            min_value=2,
-            max_value=5,
-            value=5,
-            step=1)
-        # what are the reward values?
-        rewards_str = st.text_input(
-            label="Insert the reward values separated by a space",
-            value="-100 -20 0 20 140")
-        gen_params['rewards'] = [int(i) for i in rewards_str.split(" ")]
-        gen_params['n_steps'] = st.number_input(
-            label='How many steps to solve the network?',
-            min_value=2,
-            max_value=16,
-            value=8,
-            step=1)
-        gen_params['n_levels'] = st.number_input(
-            label='How many levels in the network?',
+
+        changed_env = st.session_state.gen_env.dict()
+        changed_env['n_steps'] = st.number_input(
+            label='How many step?',
             min_value=1,
-            max_value=4,
-            value=4,
+            max_value=20,
+            value=changed_env['n_steps'],
             step=1)
 
-        with st.expander("More Parameters"):
-            changed_env = dict_input("Change more environment setting",
-                                     st.session_state.gen_env.dict())
+        # changed_env['n_edges_per_node'] = st.number_input(
+        #     label='How many edges per node?',
+        #     min_value=1,
+        #     max_value=6,
+        #     value=changed_env['n_edges_per_node'],
+        #     step=1)
 
-        # download title
+        for key, value in changed_env.items():
+            if key == 'levels':
+                with st.expander('Levels'):
+                    for i, level in enumerate(value):
+                        changed_env['levels'][i][
+                            'min_n_nodes'] = st.number_input(
+                            label=f'Min nodes in level {i}?',
+                            min_value=1,
+                            max_value=20,
+                            value=int(level['min_n_nodes']),
+                            step=1)
+
+                        if level['max_n_nodes']:
+                            changed_env['levels'][i][
+                                'max_n_nodes'] = st.number_input(
+                                label=f'Max nodes in level {i}',
+                                min_value=1,
+                                max_value=20,
+                                value=int(level['max_n_nodes']),
+                                step=1)
+
+            if key == "rewards":
+                with st.expander('Rewards'):
+                    for f, _reward in enumerate(value):
+                        # convert to string without brackets
+                        reward = str(_reward['reward'])
+                        reward = st.text_input(
+                            label=f"Reward {f + 1}",
+                            value=reward)
+                        changed_env['rewards'][f]['reward'] = int(reward)
+
+            if key == 'edges':
+                with st.expander('Edges: level transition rewards'):
+                    for f, from_level in enumerate(value):
+                        # convert to string without brackets
+                        rewards = str(from_level['rewards'])[1:-1]
+                        lab = f"Rewards for transition from level" \
+                              f" {from_level['from_level']} to level" \
+                              f" {from_level['to_levels'][0]}:"
+                        list_of_r = st.text_input(label=lab, value=rewards)
+                        # convert to list of ints
+                        list_of_rewards = [int(l) for l in list_of_r.split(',')]
+
+                        changed_env['edges'][f]["rewards"] = list_of_rewards
+
+                        # download title
         st.write("### Download Networks Options")
 
         # download the data yes or no?
@@ -80,17 +132,12 @@ with st.sidebar:
         # Every form must have a submit button.
         submitted = st.form_submit_button("Generate")
         if submitted:
-            st.info('Parameters submitted!')
-            if gen_params['n_rewards'] != len(gen_params['rewards']):
-                st.error(
-                    "Number of rewards and rewards in the text field do not"
-                    " correspond, please submit again parameters")
-            else:
-                st.info(
-                    "Number of rewards and rewards in the text field "
-                    "correspond")
-
-            st.session_state.gen_env = Environment(**changed_env)
+            try:
+                st.session_state.gen_env = Environment(**changed_env)
+            except Exception as e:
+                st.error(e)
+                environment = load_yaml("app/default_environment.yml")
+                st.session_state.gen_env = Environment(**environment)
 
             # Network_Generator class
             net_generator = NetworkGenerator(st.session_state.gen_env)
@@ -114,6 +161,10 @@ with st.sidebar:
             st.success("Networks generated!")
             if to_download_data:
                 data = net_generator.save_as_json()
+
+            gen_params['rewards'] = [r['reward'] for r in
+                                     st.session_state.gen_env.dict()['rewards']]
+            gen_params['n_steps'] = st.session_state.gen_env.n_steps
 
             # Solve networks with strategies
             myopic_agent = RuleAgent(networks, "myopic", gen_params)
