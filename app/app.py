@@ -8,10 +8,9 @@ from network_component.network_component import network_component
 from plotting.plotting_solutions import plot_final_rewards, \
     plot_avg_reward_per_step
 from solve.rule_based import RuleAgent
-from utils.dict_input import dict_input
 from utils.io import load_yaml
 
-# st.set_page_config(page_title="RN III Task Explorer", layout="wide")
+st.set_page_config(page_title="RN III Task Explorer", layout="wide")
 
 st.write("""
             # RN III Task Explorer
