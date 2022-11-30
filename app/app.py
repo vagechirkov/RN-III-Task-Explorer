@@ -43,16 +43,33 @@ with st.sidebar:
             step=10)
 
         changed_env = st.session_state.gen_env.dict()
+        changed_env['n_steps'] = st.number_input(
+            label='How many step?',
+            min_value=1,
+            max_value=20,
+            value=changed_env['n_steps'],
+            step=1)
+
         for key, value in changed_env.items():
+            if key == "rewards":
+                with st.expander('Rewards'):
+                    for f, _reward in enumerate(value):
+                        # convert to string without brackets
+                        reward = str(_reward['reward'])
+                        reward = st.text_input(
+                            label=f"Reward {f + 1}",
+                            value=reward)
+                        changed_env['rewards'][f]['reward'] = int(reward)
+
             if key == 'edges':
-                with st.expander('Edges'):
+                with st.expander('Edges: level transition rewards'):
                     for f, from_level in enumerate(value):
                         # convert to string without brackets
                         rewards = str(from_level['rewards'])[1:-1]
-                        list_of_r = st.text_input(
-                            label=f"From level {from_level['from_level']} to"
-                                  f" {from_level['to_levels'][0]} rewards",
-                            value=rewards)
+                        lab = f"Rewards for transition from level" \
+                              f" {from_level['from_level']} to level" \
+                              f" {from_level['to_levels'][0]}:"
+                        list_of_r = st.text_input(label=lab, value=rewards)
                         # convert to list of ints
                         list_of_rewards = [int(l) for l in list_of_r.split(',')]
 
