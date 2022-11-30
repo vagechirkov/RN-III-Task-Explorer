@@ -16,7 +16,7 @@ st.write("""
             design for the Reward Networks III project. 
          """)
 
-if "gen_env" in st.session_state:
+if "gen_env" not in st.session_state:
     environment = load_yaml("app/default_environment.yml")
     st.session_state.gen_env = Environment(**environment)
 
