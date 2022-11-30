@@ -2,18 +2,23 @@ import pandas as pd
 import streamlit as st
 
 from generate.generation import NetworkGenerator
+from models.environment import Environment
 from network_component.network_component import network_component
 from plotting.plotting_solutions import plot_final_rewards, \
     plot_avg_reward_per_step
 from solve.rule_based import RuleAgent
-
-st.set_page_config(page_title="RN III Task Explorer", layout="wide")
+from utils.dict_input import dict_input
+from utils.io import load_yaml
 
 st.write("""
             # RN III Task Explorer
             This is an interactive application to explore stimuli and task 
             design for the Reward Networks III project. 
          """)
+
+if "gen_env" in st.session_state:
+    environment = load_yaml("app/default_environment.yml")
+    st.session_state.gen_env = Environment(**environment)
 
 # ------------------------------------------------------------------------------
 #                      sidebar: generate and download options
@@ -59,8 +64,9 @@ with st.sidebar:
             value=4,
             step=1)
 
-        # how many nodes in each level?
-        # TODO
+        with st.expander("More Parameters"):
+            changed_env = dict_input("Change more environment setting",
+                                     st.session_state.gen_env.dict())
 
         # download title
         st.write("### Download Networks Options")
@@ -84,18 +90,10 @@ with st.sidebar:
                     "Number of rewards and rewards in the text field "
                     "correspond")
 
-            # DEBUG------------------------------------------------------------------------------
-            from utils.io import load_yaml
-            from models.environment import Environment
-
-            environment_file = "app/tests/test_environment.yml"
-            environment = load_yaml(environment_file)
-            environment = Environment(**environment)
-
-            # ------------------------------------------------------------------------------
+            st.session_state.gen_env = Environment(**changed_env)
 
             # Network_Generator class
-            net_generator = NetworkGenerator(environment)
+            net_generator = NetworkGenerator(st.session_state.gen_env)
             networks = net_generator.generate(gen_params['n_networks'])
             networks = [n.dict() for n in networks]
 
