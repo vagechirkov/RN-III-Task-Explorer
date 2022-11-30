@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import yaml
 
 from generate.generation import NetworkGenerator
 from models.environment import Environment
@@ -29,6 +30,24 @@ with st.sidebar:
     st.write("## Generate Networks")
     gen_params = {}
     data = None
+
+    with st.expander("Upload environment file", expanded=False):
+        with st.form(key="upload_params"):
+            file = st.file_uploader("Upload environment parameters file",
+                                    type="yml")
+            submit_file = st.form_submit_button(label="Submit")
+
+            if submit_file:
+                if file is not None:
+                    try:
+                        data = yaml.safe_load(file)
+                        st.success("File uploaded successfully")
+                        st.session_state.gen_env = Environment(**data)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+                else:
+                    st.error("Please upload a file")
 
     # submit parameters for generation
     with st.form("generate_form", clear_on_submit=False):
