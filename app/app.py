@@ -10,6 +10,8 @@ from solve.rule_based import RuleAgent
 from utils.dict_input import dict_input
 from utils.io import load_yaml
 
+# st.set_page_config(page_title="RN III Task Explorer", layout="wide")
+
 st.write("""
             # RN III Task Explorer
             This is an interactive application to explore stimuli and task 
@@ -39,36 +41,24 @@ with st.sidebar:
             max_value=100_000,
             value=11,
             step=10)
-        # how many rewards do you want?
-        gen_params['n_rewards'] = st.number_input(
-            label='How many rewards in the network?',
-            min_value=2,
-            max_value=5,
-            value=5,
-            step=1)
-        # what are the reward values?
-        rewards_str = st.text_input(
-            label="Insert the reward values separated by a space",
-            value="-100 -20 0 20 140")
-        gen_params['rewards'] = [int(i) for i in rewards_str.split(" ")]
-        gen_params['n_steps'] = st.number_input(
-            label='How many steps to solve the network?',
-            min_value=2,
-            max_value=16,
-            value=8,
-            step=1)
-        gen_params['n_levels'] = st.number_input(
-            label='How many levels in the network?',
-            min_value=1,
-            max_value=4,
-            value=4,
-            step=1)
 
-        with st.expander("More Parameters"):
-            changed_env = dict_input("Change more environment setting",
-                                     st.session_state.gen_env.dict())
+        changed_env = st.session_state.gen_env.dict()
+        for key, value in changed_env.items():
+            if key == 'edges':
+                with st.expander('Edges'):
+                    for f, from_level in enumerate(value):
+                        # convert to string without brackets
+                        rewards = str(from_level['rewards'])[1:-1]
+                        list_of_r = st.text_input(
+                            label=f"From level {from_level['from_level']} to"
+                                  f" {from_level['to_levels'][0]} rewards",
+                            value=rewards)
+                        # convert to list of ints
+                        list_of_rewards = [int(l) for l in list_of_r.split(',')]
 
-        # download title
+                        changed_env['edges'][f]["rewards"] = list_of_rewards
+
+                        # download title
         st.write("### Download Networks Options")
 
         # download the data yes or no?
@@ -80,17 +70,12 @@ with st.sidebar:
         # Every form must have a submit button.
         submitted = st.form_submit_button("Generate")
         if submitted:
-            st.info('Parameters submitted!')
-            if gen_params['n_rewards'] != len(gen_params['rewards']):
-                st.error(
-                    "Number of rewards and rewards in the text field do not"
-                    " correspond, please submit again parameters")
-            else:
-                st.info(
-                    "Number of rewards and rewards in the text field "
-                    "correspond")
-
-            st.session_state.gen_env = Environment(**changed_env)
+            try:
+                st.session_state.gen_env = Environment(**changed_env)
+            except Exception as e:
+                st.error(e)
+                environment = load_yaml("app/default_environment.yml")
+                st.session_state.gen_env = Environment(**environment)
 
             # Network_Generator class
             net_generator = NetworkGenerator(st.session_state.gen_env)
@@ -114,6 +99,10 @@ with st.sidebar:
             st.success("Networks generated!")
             if to_download_data:
                 data = net_generator.save_as_json()
+
+            gen_params['rewards'] = [r['reward'] for r in
+                                     st.session_state.gen_env.dict()['rewards']]
+            gen_params['n_steps'] = st.session_state.gen_env.n_steps
 
             # Solve networks with strategies
             myopic_agent = RuleAgent(networks, "myopic", gen_params)
