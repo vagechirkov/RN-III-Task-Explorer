@@ -16,8 +16,9 @@ st.write("""
             design for the Reward Networks III project. 
          """)
 
-environment = load_yaml("app/default_environment.yml")
-environment = Environment(**environment)
+if "gen_env" in st.session_state:
+    environment = load_yaml("app/default_environment.yml")
+    st.session_state.gen_env = Environment(**environment)
 
 # ------------------------------------------------------------------------------
 #                      sidebar: generate and download options
@@ -65,7 +66,7 @@ with st.sidebar:
 
         with st.expander("More Parameters"):
             changed_env = dict_input("Change more environment setting",
-                                     environment.dict())
+                                     st.session_state.gen_env.dict())
 
         # download title
         st.write("### Download Networks Options")
