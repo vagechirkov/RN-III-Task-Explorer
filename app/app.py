@@ -195,8 +195,8 @@ with st.sidebar:
 
     st.download_button(
         label="Download environment config",
-        data=yaml.dump(st.session_state.gen_env),
-        file_name="environment.json",
+        data=yaml.dump(st.session_state.gen_env.dict()),
+        file_name="environment.yml",
     )
 
 
