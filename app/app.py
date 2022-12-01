@@ -131,6 +131,9 @@ with st.sidebar:
 
         # Every form must have a submit button.
         submitted = st.form_submit_button("Generate")
+
+
+
         if submitted:
             try:
                 st.session_state.gen_env = Environment(**changed_env)
@@ -189,6 +192,13 @@ with st.sidebar:
             label="Download solutions (loss)",
             data=loss_agent.save_solutions_frontend(),
             file_name='solutions_loss.json')
+
+    st.download_button(
+        label="Download environment config",
+        data=yaml.dump(st.session_state.gen_env),
+        file_name="environment.json",
+    )
+
 
 # ------------------------------------------------------------------------------
 #                                   Compare
