@@ -4,6 +4,7 @@ import random
 import string
 from collections import Counter
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
@@ -100,6 +101,8 @@ class NetworkGenerator:
                 net["links"][ii]["target_x"] = vert[0, 2]
                 net["links"][ii]["target_y"] = -1 * vert[1, 2]
 
+                plt.close("all")
+
             network_id = hashlib.md5(
                 json.dumps(net, sort_keys=True).encode("utf-8")
             ).hexdigest()
@@ -123,6 +126,7 @@ class NetworkGenerator:
                     f"counter {c}, nodes are {list(c.keys())} "
                     f"(n={len(list(c.keys()))})"
                 )
+
 
         return self.networks
 
