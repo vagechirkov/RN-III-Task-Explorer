@@ -30,6 +30,7 @@ class RuleAgent:
         self.networks = networks
         self.strategy = strategy
         self.params = params
+        self.n_large_losses = self.params['n_losses']
         self.min_reward = min(self.params['rewards'])
 
         # colors for plot
@@ -56,8 +57,12 @@ class RuleAgent:
         if self.strategy == 'random':
             return random.choice(possible_actions)
 
-        # take first loss -> select among possible actions the one that gives best reward BUT make sure to take a first big loss (-100 but can also change)
-        if self.strategy == 'take_first_loss' and self.loss_counter < 2 and self.min_reward in possible_actions_rewards:
+        # take first loss -> select among possible actions the one that gives best reward BUT
+        # make sure to take a first big loss (-100 but can also change)
+        if self.strategy == 'take_first_loss' and \
+                self.loss_counter < self.n_large_losses and \
+                self.min_reward in possible_actions_rewards:
+
             self.loss_counter += 1
 
             if len(np.argwhere(possible_actions_rewards == self.min_reward)[
