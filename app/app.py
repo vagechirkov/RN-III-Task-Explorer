@@ -60,6 +60,13 @@ with st.sidebar:
             value=11,
             step=10)
 
+        gen_params['n_losses'] = st.number_input(
+            label='How many large losses to take (for loss solving strategy)?',
+            min_value=1,
+            max_value=5,
+            value=1,
+            step=1)
+
         changed_env = st.session_state.gen_env.dict()
         changed_env['n_steps'] = st.number_input(
             label='How many step?',
@@ -67,13 +74,6 @@ with st.sidebar:
             max_value=20,
             value=changed_env['n_steps'],
             step=1)
-
-        # changed_env['n_edges_per_node'] = st.number_input(
-        #     label='How many edges per node?',
-        #     min_value=1,
-        #     max_value=6,
-        #     value=changed_env['n_edges_per_node'],
-        #     step=1)
 
         for key, value in changed_env.items():
             if key == 'levels':
@@ -131,8 +131,6 @@ with st.sidebar:
 
         # Every form must have a submit button.
         submitted = st.form_submit_button("Generate")
-
-
 
         if submitted:
             try:
@@ -199,7 +197,6 @@ with st.sidebar:
         file_name="environment.yml",
     )
 
-
 # ------------------------------------------------------------------------------
 #                                   Compare
 # ------------------------------------------------------------------------------
@@ -209,7 +206,8 @@ with st.expander("Compare strategies 🤖"):
         m_df = st.session_state.myopic_solutions
         l_df = st.session_state.loss_solutions
         strategy_data = pd.concat([m_df, l_df], ignore_index=True)
-        strategy_data_final = strategy_data[strategy_data['step'] == 8]
+        strategy_data_final = strategy_data[strategy_data['step'] == st.session_state.gen_env.n_steps]
+        st.write(f"Steps to solve: {st.session_state.gen_env.n_steps}")
 
         col1, col2 = st.columns([1, 2])
         g = plot_final_rewards(strategy_data_final)
@@ -273,7 +271,7 @@ with st.expander("Show solution dataframes 📊"):
             "average reward obtained at each step per strategy")
         col1, col2 = st.columns(2)
         with col1:
-            avg_val1 = m_df[m_df['step'] == 8]['total_reward'].mean().round(0)
+            avg_val1 = m_df[m_df['step'] == st.session_state.gen_env.n_steps]['total_reward'].mean().round(0)
             st.metric(
                 "Myopic",
                 value=int(avg_val1))
@@ -285,7 +283,7 @@ with st.expander("Show solution dataframes 📊"):
             st.dataframe(m_avg_step_reward)
 
         with col2:
-            avg_val2 = l_df[l_df['step'] == 8]['total_reward'].mean().round(0)
+            avg_val2 = l_df[l_df['step'] == st.session_state.gen_env.n_steps]['total_reward'].mean().round(0)
             st.metric(
                 "Take Loss then Myopic",
                 value=int(avg_val2))
