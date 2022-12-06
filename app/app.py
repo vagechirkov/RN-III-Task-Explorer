@@ -247,7 +247,9 @@ with st.expander("Try yourself to solve the network 😎"):
 
             network_component(
                 timer=60,
-                network=st.session_state.networks[st.session_state.net_id - 1])
+                network=st.session_state.networks[st.session_state.net_id - 1],
+                rewards=[r.reward for r in st.session_state.gen_env.rewards]
+            )
 
         # visualization parameters
         # col1, col2 = st.columns(2)
