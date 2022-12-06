@@ -2,7 +2,7 @@ import json
 
 import streamlit.components.v1 as components
 
-BASE_URL = "https://631063bad8ec25de99f6946b-lredwqywky.chromatic.com/" \
+BASE_URL = "https://631063bad8ec25de99f6946b-tygnjygkgi.chromatic.com/" \
            "iframe.html?"
 STORY_COMPONENT = "id=utils-taskexplorer2--default&viewMode=story"
 
