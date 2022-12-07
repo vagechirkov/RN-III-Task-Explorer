@@ -248,20 +248,9 @@ with st.expander("Try yourself to solve the network 😎"):
             network_component(
                 timer=60,
                 network=st.session_state.networks[st.session_state.net_id - 1],
+                max_step=st.session_state.gen_env.n_steps,
                 rewards=[r.reward for r in st.session_state.gen_env.rewards]
             )
-
-        # visualization parameters
-        # col1, col2 = st.columns(2)
-        # with col1:
-        #     network_id = st.selectbox("Which network to try?",
-        #                               ("Email", "Home phone",
-        #                                "Mobile phone"))
-        # with col2:
-        #     strategies = st.multiselect(
-        #         'Which strategy solution do you want to see?',
-        #         ['Myopic', 'Loss'],
-        #         ['Myopic'])
     else:
         network_component(60)
 

@@ -7,7 +7,8 @@ BASE_URL = "https://631063bad8ec25de99f6946b-tygnjygkgi.chromatic.com/" \
 STORY_COMPONENT = "id=utils-taskexplorer2--default&viewMode=story"
 
 
-def network_component(timer: int = 25, network: dict = None, rewards: list = [-100, -20, 0, 20, 140]):
+def network_component(timer: int = 25, network: dict = None, max_step: int = 8,
+                      rewards: list = [-100, -20, 0, 20, 140]):
     """Embeds a network component from Chromatic.
 
     Parameters
@@ -16,10 +17,12 @@ def network_component(timer: int = 25, network: dict = None, rewards: list = [-1
         The time in ms for the component to wait before rendering.
     network : dict
         The network to be rendered.
+    max_step : int
+        The maximum number of steps in one trial.
     rewards : list
     """
 
-    url = f"{BASE_URL}args=timer:{timer}" \
+    url = f"{BASE_URL}args=timer:{timer};maxSteps:{max_step}" \
           f"&{STORY_COMPONENT}"
     if network is not None:
         # convert dict to string
