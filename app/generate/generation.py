@@ -84,6 +84,9 @@ class NetworkGenerator:
             plt.axis('equal')
             arrow_size = 0.1
             node_size = self.node_size
+
+            _ = nx.draw_networkx_nodes(g, pos=pos, node_size=node_size)
+
             for ii, e in enumerate(g.edges()):
                 if reversed(e) in g.edges():
                     net["links"][ii]["arc_type"] = "curved"
