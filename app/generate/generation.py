@@ -37,7 +37,8 @@ class NetworkGenerator:
         self.env = environment
 
         # parameters for visualization
-        self.node_size = 2200
+        # This parameter is used to determine the size of the nodes to get proper coordinates for edges
+        self.node_size = 3000
         self.arc_rad = 0.1
 
         self.from_to = {
@@ -79,6 +80,8 @@ class NetworkGenerator:
             # print(pos_map)
 
             # NEW: add vertices for visualization purposes
+            plt.figure()
+            plt.axis('equal')
             for ii, e in enumerate(g.edges()):
                 if reversed(e) in g.edges():
                     net["links"][ii]["arc_type"] = "curved"
@@ -104,7 +107,7 @@ class NetworkGenerator:
                 net["links"][ii]["target_x"] = vert[0, 2]
                 net["links"][ii]["target_y"] = -1 * vert[1, 2]
 
-                plt.close("all")
+            plt.close("all")
 
             network_id = hashlib.md5(
                 json.dumps(net, sort_keys=True).encode("utf-8")
