@@ -161,7 +161,7 @@ with st.sidebar:
             st.session_state.net_id = 1
             st.success("Networks generated!")
             if to_download_data:
-                data = net_generator.save_as_json()
+                st.session_state.net_data = net_generator.save_as_json()
 
             gen_params['rewards'] = [r['reward'] for r in
                                      st.session_state.gen_env.dict()['rewards']]
@@ -171,24 +171,26 @@ with st.sidebar:
             myopic_agent = RuleAgent(networks, "myopic", gen_params)
 
             st.session_state.myopic_solutions = myopic_agent.solve()
+            st.session_state.myopic_solutions_to_download = myopic_agent.save_solutions_frontend()
             loss_agent = RuleAgent(networks, "take_first_loss", gen_params)
             st.session_state.loss_solutions = loss_agent.solve()
+            st.session_state.loss_solutions_to_download = loss_agent.save_solutions_frontend()
             st.success("Solutions to networks calculated!")
 
     # download button cannot be used inside form
     if to_download_data:
         st.download_button(
             label="Download data as JSON",
-            data=data,
+            data=st.session_state.net_data,
             file_name='networks.json')
     if to_download_solutions:
         st.download_button(
             label="Download solutions (myopic)",
-            data=myopic_agent.save_solutions_frontend(),
+            data=st.session_state.myopic_solutions_to_download,
             file_name='solutions_myopic.json')
         st.download_button(
             label="Download solutions (loss)",
-            data=loss_agent.save_solutions_frontend(),
+            data=st.session_state.loss_solutions_to_download,
             file_name='solutions_loss.json')
 
     st.download_button(
