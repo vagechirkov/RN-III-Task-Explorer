@@ -38,7 +38,7 @@ class NetworkGenerator:
 
         # parameters for visualization
         # This parameter is used to determine the size of the nodes to get proper coordinates for edges
-        self.node_size = 3000
+        self.node_size = 2200
         self.arc_rad = 0.1
 
         self.from_to = {
@@ -82,6 +82,8 @@ class NetworkGenerator:
             # NEW: add vertices for visualization purposes
             plt.figure()
             plt.axis('equal')
+            arrow_size = 0.1
+            node_size = self.node_size
             for ii, e in enumerate(g.edges()):
                 if reversed(e) in g.edges():
                     net["links"][ii]["arc_type"] = "curved"
@@ -89,13 +91,18 @@ class NetworkGenerator:
                         g,
                         pos,
                         edgelist=[e],
-                        node_size=self.node_size,
+                        node_size=node_size,
+                        arrowsize=arrow_size,
                         connectionstyle=f"arc3, rad = {self.arc_rad}",
                     )
                 else:
                     net["links"][ii]["arc_type"] = "straight"
                     arc = nx.draw_networkx_edges(
-                        g, pos, edgelist=[e], node_size=self.node_size
+                        g,
+                        pos,
+                        edgelist=[e],
+                        node_size=node_size,
+                        arrowsize=arrow_size,
                     )
 
                 vert = arc[0].get_path().vertices.T[:, :3] * 100
@@ -116,8 +123,8 @@ class NetworkGenerator:
             c = Counter([e["source"] for e in net["links"]])
 
             if (
-                all(value == self.env.n_edges_per_node for value in c.values())
-                and len(list(c.keys())) == self.env.n_nodes
+                    all(value == self.env.n_edges_per_node for value in c.values())
+                    and len(list(c.keys())) == self.env.n_nodes
             ):
                 create_network = self.create_network_object(
                     pos_map=pos_map,
@@ -169,8 +176,8 @@ class NetworkGenerator:
         return sorted(
             nodes,
             key=lambda n: G.nodes[n]["level"]
-            + G.out_degree(n) * 0.1
-            + random.random() * 0.01,
+                          + G.out_degree(n) * 0.1
+                          + random.random() * 0.01,
             reverse=False,
         )
 
