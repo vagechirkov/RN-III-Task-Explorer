@@ -272,4 +272,4 @@ class NetworkGenerator:
         )
 
     def save_as_json(self):
-        return json.dumps(self.networks)
+        return json.dumps([n.dict() for n in self.networks])
